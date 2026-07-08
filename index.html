@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oriole Nursery School — design mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#5B990A;          /* Oriole brand green (pulled from live site) */
+    --green-deep:#46760A;
+    --green-tint:#EEF4E2;
+    --cream:#FAF6EE;
+    --paper:#FFFFFF;
+    --ink:#26271F;
+    --muted:#5E6157;
+    --line:#E7E1D3;
+    --clay:#C8744E;           /* warm secondary accent, used sparingly */
+    --radius:18px;
+    --shadow:0 18px 50px -28px rgba(38,39,31,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.serif{font-family:'Fraunces',Georgia,serif;font-weight:500;line-height:1.1;letter-spacing:-.01em}
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--green-deep)}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;font-weight:600;font-size:.95rem;padding:.85rem 1.5rem;border-radius:100px;border:1.5px solid transparent;cursor:pointer;transition:.2s;white-space:nowrap}
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:hover{background:var(--green-deep)}
+  .btn-ghost{background:transparent;border-color:var(--ink);color:var(--ink)}
+  .btn-ghost:hover{background:var(--ink);color:#fff}
+  .btn-light{background:#fff;color:var(--ink)}
+
+  /* header */
+  header{position:sticky;top:0;z-index:50;background:rgba(250,246,238,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:78px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{height:52px;width:auto}
+  .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
+  .hamburger span{display:block;width:24px;height:2.5px;background:var(--ink);border-radius:2px}
+  nav.links{display:flex;gap:30px;align-items:center;font-weight:500;font-size:.95rem}
+  nav.links a:hover{color:var(--green-deep)}
+
+  /* programs dropdown */
+  .ddwrap{position:relative}
+  .ddwrap>a{display:inline-flex;align-items:center;gap:5px}
+  .ddwrap>a::after{content:"";width:7px;height:7px;border-right:1.8px solid currentColor;border-bottom:1.8px solid currentColor;transform:rotate(45deg) translateY(-2px)}
+  .ddmenu{position:absolute;top:100%;left:-16px;padding-top:12px;display:none;z-index:70}
+  .ddwrap:hover .ddmenu,.ddwrap:focus-within .ddmenu{display:block}
+  .ddmenu .ddin{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:8px;min-width:240px;display:flex;flex-direction:column}
+  .ddmenu a{padding:10px 14px;border-radius:9px;font-size:.92rem;white-space:nowrap}
+  .ddmenu a:hover{background:var(--green-tint);color:var(--green-deep)}
+
+  .nav-cta{display:flex;align-items:center;gap:14px}
+  .open-badge{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:var(--green-deep);background:var(--green-tint);padding:.4rem .8rem;border-radius:100px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(91,153,10,.18)}
+
+  /* hero */
+  .hero{position:relative;min-height:560px;display:flex;align-items:flex-end;color:#fff;overflow:hidden}
+  .hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .hero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,28,10,.15) 0%,rgba(20,28,10,.18) 40%,rgba(20,28,10,.72) 100%)}
+  .hero .wrap{position:relative;padding-bottom:54px;padding-top:60px}
+  .hero-eyebrow{display:inline-block;font-size:.74rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#fff;background:rgba(91,153,10,.85);padding:.4rem .85rem;border-radius:100px;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .hero h1{font-size:clamp(2.3rem,5vw,3.9rem);max-width:16ch;color:#fff}
+  .hero p.sub{font-size:1.15rem;max-width:42ch;margin:18px 0 26px;color:#F3EEE2}
+  .hero .cta-row{display:flex;gap:14px;flex-wrap:wrap}
+
+  /* trust strip */
+  .trust{background:var(--green);color:#fff}
+  .trust .wrap{display:grid;grid-template-columns:repeat(5,1fr);gap:0}
+  .trust .cell{padding:22px 18px;text-align:center;border-right:1px solid rgba(255,255,255,.18)}
+  .trust .cell:last-child{border-right:none}
+  .trust .cell b{display:block;font-family:'Fraunces',serif;font-size:1.45rem;font-weight:600}
+  .trust .cell span{font-size:.85rem;opacity:.9}
+
+  section{padding:76px 0}
+  .section-head{max-width:60ch}
+  .section-head h2{font-size:clamp(1.9rem,3.4vw,2.7rem);margin:12px 0 8px}
+  .section-head p{color:var(--muted);font-size:1.05rem}
+
+  /* eligibility */
+  .elig{background:var(--green-tint)}
+  .elig .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:34px;display:grid;grid-template-columns:1.1fr .9fr;gap:38px;align-items:center}
+  .elig h2{font-size:1.9rem;margin-bottom:8px}
+  .elig p{color:var(--muted)}
+  .picker{display:flex;flex-direction:column;gap:12px}
+  .picker label{font-weight:600;font-size:.9rem}
+  .picker .row{display:flex;gap:10px}
+  .picker select{flex:1;padding:.8rem 1rem;border-radius:12px;border:1.5px solid var(--line);font:inherit;background:#fff}
+  .picker small{color:var(--muted)}
+
+  /* programs */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:36px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:.25s}
+  .card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+  .card .ph{aspect-ratio:4/3;overflow:hidden}
+  .card .ph img{width:100%;height:100%;object-fit:cover}
+  .card .body{padding:22px 22px 26px}
+  .card .tag{font-size:.74rem;font-weight:600;letter-spacing:.04em;color:#fff;background:var(--green);padding:.25rem .7rem;border-radius:100px;display:inline-block;margin-bottom:10px}
+  .card.j .tag{background:var(--clay)}
+  .card.s .tag{background:#7A8B3C}
+  .card h3{font-size:1.4rem;margin-bottom:6px}
+  .card p{color:var(--muted);font-size:.95rem;margin-bottom:14px}
+  .card .more{font-weight:600;color:var(--green-deep);font-size:.92rem}
+  .card .xnote{display:inline-block;font-size:.78rem;font-weight:700;color:var(--green-deep);background:var(--green-tint);border-radius:100px;padding:3px 11px;margin-bottom:12px}
+
+  /* split: co-op */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center}
+  .split img{border-radius:var(--radius);box-shadow:var(--shadow);aspect-ratio:5/4;object-fit:cover;width:100%}
+  .split h2{font-size:clamp(1.8rem,3vw,2.5rem);margin:12px 0 14px}
+  .split p{color:var(--muted);margin-bottom:14px}
+  .pill-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .pill-list span{background:var(--green-tint);color:var(--green-deep);font-weight:600;font-size:.85rem;padding:.45rem .9rem;border-radius:100px}
+
+  /* enrichment */
+  .enrich{background:var(--ink);color:#fff;text-align:center}
+  .enrich h2{font-size:clamp(1.8rem,3vw,2.4rem);color:#fff}
+  .enrich .row{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:30px}
+  .enrich .chip{border:1px solid rgba(255,255,255,.25);border-radius:100px;padding:.7rem 1.4rem;font-weight:500;font-size:1rem}
+
+  /* summer camp feature */
+  .summer{background:var(--cream)}
+  .summer-card{display:grid;grid-template-columns:1fr 1fr;background:#FBEDE3;border:1px solid #F0D8C7;border-radius:26px;overflow:hidden;box-shadow:var(--shadow)}
+  .summer-img{min-height:340px}
+  .summer-img img{width:100%;height:100%;object-fit:cover}
+  .summer-body{padding:46px 48px;display:flex;flex-direction:column;justify-content:center}
+  .summer-body h2{font-size:clamp(1.9rem,3vw,2.6rem);margin:10px 0 12px}
+  .summer-body p{color:var(--muted);margin-bottom:24px;max-width:46ch}
+
+  /* testimonials carousel */
+  .tst{background:var(--cream);text-align:center}
+  .tst .quotebox{max-width:760px;margin:30px auto 0;min-height:200px;position:relative}
+  .stars{color:#E2A93B;letter-spacing:3px;font-size:1.1rem;margin-bottom:16px}
+  .tst blockquote{font-family:'Fraunces',serif;font-size:clamp(1.3rem,2.4vw,1.85rem);line-height:1.35;font-style:italic;color:var(--ink)}
+  .tst .who{margin-top:18px;font-weight:600}
+  .tst .src{font-size:.8rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px;margin-top:4px}
+  .tst .slide{display:none}
+  .tst .slide.on{display:block;animation:fade .5s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .dots{display:flex;gap:9px;justify-content:center;margin-top:26px}
+  .dots button{width:9px;height:9px;border-radius:50%;border:none;background:var(--line);cursor:pointer}
+  .dots button.on{background:var(--green);width:26px;border-radius:100px}
+  .gbadge{display:inline-flex;align-items:center;gap:8px;margin-top:24px;font-size:.85rem;color:var(--muted)}
+  .gbadge b{color:var(--ink)}
+
+  /* how to enrol */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:36px;counter-reset:s}
+  .step{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:30px 26px;position:relative}
+  .step::before{counter-increment:s;content:"0" counter(s);font-family:'Fraunces',serif;font-size:2.2rem;color:var(--green);font-weight:600;display:block;margin-bottom:10px}
+  .step h3{font-size:1.2rem;margin-bottom:6px}
+  .step p{color:var(--muted);font-size:.93rem}
+
+  /* conversion band */
+  .band{background:linear-gradient(120deg,var(--green) 0%,var(--green-deep) 100%);color:#fff;text-align:center;border-radius:26px;padding:56px 28px;box-shadow:var(--shadow)}
+  .band h2{color:#fff;font-size:clamp(1.9rem,3.2vw,2.6rem)}
+  .band p{margin:12px 0 24px;opacity:.92;font-size:1.05rem}
+  .band .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+  /* blog */
+  .posts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:34px}
+  .post .ph{aspect-ratio:16/10;border-radius:14px;overflow:hidden;margin-bottom:14px}
+  .post .ph img{width:100%;height:100%;object-fit:cover}
+  .post .cat{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--clay)}
+  .post h3{font-size:1.18rem;margin:6px 0}
+  .post .date{font-size:.82rem;color:var(--muted)}
+
+  /* lead form */
+  .lead-form{background:var(--green-tint)}
+  .lf-card{display:grid;grid-template-columns:.95fr 1.05fr;gap:44px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:44px;box-shadow:var(--shadow)}
+  .lf-card h2{font-size:clamp(1.7rem,2.8vw,2.3rem);margin:8px 0 10px}
+  .lf-card p{color:var(--muted)}
+  .lf-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .lf-fields .full{grid-column:1 / -1}
+  .lf-fields label{display:block;font-size:.82rem;font-weight:600;margin-bottom:5px}
+  .lf-fields input,.lf-fields select{width:100%;padding:.8rem 1rem;border-radius:12px;border:1.5px solid var(--line);font:inherit;background:#fff}
+  .lf-fields .req{color:var(--clay)}
+
+  /* footer */
+  footer{background:var(--ink);color:#CFCFC4;padding:60px 0 30px;font-size:.92rem}
+  .fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:36px}
+  footer h4{color:#fff;font-family:'Fraunces',serif;font-size:1.05rem;margin-bottom:14px;font-weight:600}
+  footer a{display:block;margin-bottom:8px;color:#CFCFC4}
+  footer a:hover{color:#fff}
+  .fbrand img{height:54px;margin-bottom:14px}
+  .fbot{border-top:1px solid rgba(255,255,255,.13);margin-top:40px;padding-top:20px;display:flex;justify-content:space-between;font-size:.8rem;color:#8E9082;flex-wrap:wrap;gap:10px}
+  .note{background:#FFF8E6;border:1px dashed #E2A93B;color:#7a5b12;font-size:.82rem;padding:10px 16px;text-align:center}
+
+  @media(max-width:880px){
+    nav.links{display:none}
+    .open-badge{display:none}            /* keep mobile header clean */
+    .hamburger{display:flex}
+    .nav{height:68px}
+    .brand img{height:44px}
+    .nav-cta{gap:10px}
+    .btn{padding:.7rem 1.15rem;font-size:.9rem}
+    .trust .wrap{grid-template-columns:repeat(2,1fr)}
+    .trust .cell:nth-child(2){border-right:none}
+    .trust .cell{border-bottom:1px solid rgba(255,255,255,.18)}
+    .cards,.steps,.posts{grid-template-columns:1fr}
+    .split,.elig .card,.summer-card,.lf-card{grid-template-columns:1fr;gap:22px}
+    .lf-card{padding:26px}
+    .summer-card{gap:0}
+    .summer-img{min-height:240px}
+    .summer-body{padding:30px 26px}
+    .elig .card{padding:24px}
+    .picker .row{flex-direction:column;align-items:stretch}
+    .picker .row .btn{justify-content:center}
+    .fgrid{grid-template-columns:1fr 1fr}
+    .hero{min-height:500px}
+    section{padding:56px 0}
+  }
+</style>
+<script src="gate.js"></script>
+</head>
+<body>
+
+<div class="note">Design mockup — layout & style only. Photos are Oriole's own; final copy/testimonials to be confirmed. Green #5B990A + logo pulled from live site.</div>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">
+      <img src="assets/logo-t.png" alt="Oriole Nursery School">
+    </div>
+    <nav class="links">
+      <a href="index.html">About</a>
+      <div class="ddwrap"><a href="#programs">Programs</a>
+        <div class="ddmenu"><div class="ddin">
+          <a href="toddler.html">Toddler Class <span style="color:var(--muted);font-weight:400">· 18mo–2.5</span></a>
+          <a href="junior.html">Junior Preschool <span style="color:var(--muted);font-weight:400">· 2.6–3</span></a>
+          <a href="senior.html">Senior Preschool <span style="color:var(--muted);font-weight:400">· 3–5</span></a>
+        </div></div>
+      </div>
+      <a href="#summer">Summer Camp</a>
+      <a href="#enrol">How to Enrol</a>
+      <a href="#">Blog</a>
+    </nav>
+    <div class="nav-cta">
+      <span class="open-badge"><span class="dot"></span> Enrolments open</span>
+      <a class="btn btn-primary" href="mailto:registrar@oriolenurseryschool.com">Book a Tour</a>
+      <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero" style="padding:0">
+  <img class="bg" src="assets/md/md-parachute-park.jpg" alt="Children and families playing parachute games in the park with Oriole">
+  <div class="scrim"></div>
+  <div class="wrap">
+    <span class="hero-eyebrow">Deer Park · Yonge &amp; St. Clair · Since 1948</span>
+    <h1>A play-based co-operative nursery school in the heart of Deer Park.</h1>
+    <p class="sub">Warm, structured mornings for ages 18 months to 5 — and new this September, an extended day to 2:45 for ages 2.5+. Putting the child first since 1948.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="mailto:registrar@oriolenurseryschool.com">Book a Tour</a>
+      <a class="btn btn-light" href="#eligibility">Check your child’s class →</a>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST STRIP -->
+<div class="trust">
+  <div class="wrap">
+    <div class="cell"><b>Since 1948</b><span>One of Toronto’s first co-ops</span></div>
+    <div class="cell"><b>18 mo–5 yrs</b><span>Three small classes</span></div>
+    <div class="cell"><b>1:4–1:8</b><span>High educator ratios</span></div>
+    <div class="cell"><b>2 / 3 / 5</b><span>Flexible mornings</span></div>
+    <div class="cell"><b>New</b><span>Extended day to 2:45</span></div>
+  </div>
+</div>
+
+<!-- ELIGIBILITY / AGE PICKER -->
+<section class="elig" id="eligibility">
+  <div class="wrap">
+    <div class="card">
+      <div>
+        <span class="eyebrow">Find the right fit</span>
+        <h2>Which class is right for your child?</h2>
+        <p>Tell us your child’s age and we’ll take you straight to the right program — Toddler, Junior, or Senior Preschool.</p>
+      </div>
+      <div class="picker">
+        <label for="age">My child’s age</label>
+        <div class="row">
+          <select id="age">
+            <option>Under 18 months</option>
+            <option selected>18 months – 2.5 years</option>
+            <option>2.6 – 3 years</option>
+            <option>3 – 5 years</option>
+          </select>
+          <a class="btn btn-primary" id="ageGo" href="#programs">See class →</a>
+        </div>
+        <small>Takes you to the best class page · also lets us follow up about a tour.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMS -->
+<section id="programs">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Our Programs</span>
+      <h2>Three classes, each built for the age.</h2>
+      <p>Every class has its own daily rhythm, weekly activities, and educators — explore the one that fits your child.</p>
+    </div>
+    <div class="cards">
+      <a class="card t" href="toddler.html">
+        <div class="ph"><img src="assets/md/md-toddler-couch-laugh.jpg" alt="Toddlers laughing together on the classroom couch at Oriole"></div>
+        <div class="body">
+          <span class="tag">Toddler · 18mo–2.5</span>
+          <h3>Toddler Class</h3>
+          <p>Sensory play, language and self-help skills in a gentle, social first step away from home.</p>
+          <span class="more">Explore Toddler →</span>
+        </div>
+      </a>
+      <a class="card j" href="junior.html">
+        <div class="ph"><img src="assets/fr/fr-junior-rainbowballs.jpg" alt="Junior preschoolers playing with rainbow balls"></div>
+        <div class="body">
+          <span class="tag">Junior · 2.6–3</span>
+          <h3>Junior Preschool</h3>
+          <p>Friendships, routines and independence, with daily creative play and outdoor time.</p>
+          <span class="xnote">New: extended day to 2:45</span><br>
+          <span class="more">Explore Junior →</span>
+        </div>
+      </a>
+      <a class="card s" href="senior.html">
+        <div class="ph"><img src="assets/fr/fr-senior-counting.jpg" alt="Senior preschooler counting with cubes"></div>
+        <div class="body">
+          <span class="tag">Senior · 3–5</span>
+          <h3>Senior Preschool</h3>
+          <p>A confident foundation for kindergarten — phonics, numeracy and problem-solving through play.</p>
+          <span class="xnote">New: extended day to 2:45</span><br>
+          <span class="more">Explore Senior →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CO-OP DIFFERENCE -->
+<section style="background:var(--paper)">
+  <div class="wrap split">
+    <img src="assets/fr/fr-hall-bigcircle.jpg" alt="Families and children in a big circle in the Oriole hall">
+    <div>
+      <span class="eyebrow">The co-operative difference · since 1948</span>
+      <h2>A community that stays close — and consistent.</h2>
+      <p>One of Toronto’s first co-operative nursery schools, Oriole has welcomed generations of Deer Park families since 1948. We’re led by long-tenured educators and guided by a board of directors made up of parents, which keeps our classes small, our fees lower, and our community genuinely involved.</p>
+      <p>Because our families share the week between school and their own afternoon care, Oriole stays a steady, familiar place — fewer disruptions and more consistency for your child.</p>
+      <div class="pill-list">
+        <span>Est. 1948</span><span>Long-tenured staff</span><span>Parent board</span><span>Small classes</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENRICHMENT -->
+<section class="enrich">
+  <div class="wrap">
+    <span class="eyebrow" style="color:#DCE9C4">More than a morning</span>
+    <h2>Enrichment woven through every week.</h2>
+    <div class="row">
+      <span class="chip">French</span>
+      <span class="chip">Sportball</span>
+      <span class="chip">Music &amp; Dance</span>
+      <span class="chip">Yoga</span>
+      <span class="chip">Science</span>
+      <span class="chip">Cooking</span>
+      <span class="chip">Gardening</span>
+    </div>
+  </div>
+</section>
+
+<!-- LEAD CAPTURE (mid-page) -->
+<section class="lead-form">
+  <div class="wrap">
+    <div class="lf-card">
+      <div>
+        <span class="eyebrow">Get more info</span>
+        <h2>Have a question or want our program guide?</h2>
+        <p>Leave your details and we’ll send our program guide and open-house dates, and answer anything you’re wondering about.</p>
+      </div>
+      <form class="lf-fields" onsubmit="return false">
+        <div><label>First name <span class="req">*</span></label><input type="text" placeholder="Your first name"></div>
+        <div><label>Child’s age <span class="req">*</span></label>
+          <select><option>Under 18 months</option><option selected>18 months – 2.5 years</option><option>2.6 – 3 years</option><option>3 – 5 years</option></select>
+        </div>
+        <div><label>Email <span class="req">*</span></label><input type="email" placeholder="you@email.com"></div>
+        <div><label>Phone <span class="req">*</span></label><input type="tel" placeholder="(416) 000-0000"></div>
+        <div class="full"><button class="btn btn-primary" style="width:100%;justify-content:center">Send me the program guide</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- SUMMER CAMP FEATURE -->
+<section id="summer" class="summer">
+  <div class="wrap">
+    <div class="summer-card">
+      <div class="summer-img"><img src="assets/md/md-camp-watertable.jpg" alt="Water play in the Oriole play yard in summer"></div>
+      <div class="summer-body">
+        <span class="eyebrow" style="color:var(--clay)">Now booking · Summer 2026</span>
+        <h2>Summer Camp at Oriole</h2>
+        <p>Half-day summer mornings for ages 2–5 — the classroom comes outside for water play, building, art and weekly themes, June through early September. Book by the week.</p>
+        <a class="btn btn-primary" href="summer.html">Explore Summer Camp</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS CAROUSEL -->
+<section class="tst">
+  <div class="wrap">
+    <span class="eyebrow">From our families</span>
+    <div class="quotebox">
+      <div class="slide on">
+        <div class="stars">★★★★★</div>
+        <blockquote>“Oriole felt like family from the first tour. The teachers know every child, and the co-op community gave us friends we still have years later.”</blockquote>
+        <div class="who">Sarah M.</div>
+        <div class="src">◆ Parent of a Senior Preschooler</div>
+      </div>
+      <div class="slide">
+        <div class="stars">★★★★★</div>
+        <blockquote>“The flexible mornings were perfect for our schedule, and our son came home singing French songs. We couldn’t have asked for a warmer first school.”</blockquote>
+        <div class="who">David &amp; Priya</div>
+        <div class="src">G Google review</div>
+      </div>
+      <div class="slide">
+        <div class="stars">★★★★★</div>
+        <blockquote>“Small classes, real play, and educators who clearly love what they do. Oriole set our daughter up beautifully for kindergarten.”</blockquote>
+        <div class="who">Jennifer L.</div>
+        <div class="src">G Google review</div>
+      </div>
+    </div>
+    <div class="dots">
+      <button class="on" onclick="go(0)"></button>
+      <button onclick="go(1)"></button>
+      <button onclick="go(2)"></button>
+    </div>
+    <div class="gbadge">G&nbsp; <b>Pulled live</b> from Oriole’s Google reviews + website testimonials</div>
+  </div>
+</section>
+
+<!-- HOW TO ENROL -->
+<section id="enrol">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">How to enrol</span>
+      <h2>From first visit to first day.</h2>
+      <p>A simple, no-pressure path — see the school before any commitment.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Book a tour</h3><p>Come see the classrooms and meet our educators. Free, and the best way to experience the magic of Oriole Nursery School.</p></div>
+      <div class="step"><h3>Apply</h3><p>Loved it? Submit your application and choose your class and mornings — or the new extended day. Co-op participation explained up front.</p></div>
+      <div class="step"><h3>Enrol</h3><p>Confirm your spot and join the Oriole community. We’ll guide you through your first week.</p></div>
+    </div>
+    <div style="margin-top:44px"><div class="band">
+      <h2>Come see Oriole for yourself.</h2>
+      <p>Enrolments are open for the 2026/2027 school year. Book a visit and meet our educators.</p>
+      <div class="cta-row">
+        <a class="btn btn-light" href="mailto:registrar@oriolenurseryschool.com">Book a Tour</a>
+        <a class="btn" style="border-color:#fff;color:#fff" href="application.html">Start an Application</a>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- BLOG -->
+<section style="background:var(--paper)">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">From the blog</span>
+      <h2>Life at Oriole.</h2>
+    </div>
+    <div class="posts">
+      <div class="post">
+        <div class="ph"><img src="assets/place.jpg" alt=""></div>
+        <span class="cat">Events &amp; Open Houses</span>
+        <h3>Join our Spring Open House</h3>
+        <div class="date">May 2026</div>
+      </div>
+      <div class="post">
+        <div class="ph"><img src="assets/class2.jpg" alt=""></div>
+        <span class="cat">Teacher Stories</span>
+        <h3>Meet Heather, our supervisor of 16 years</h3>
+        <div class="date">April 2026</div>
+      </div>
+      <div class="post">
+        <div class="ph"><img src="assets/class3.jpg" alt=""></div>
+        <span class="cat">Parent Stories</span>
+        <h3>Why we chose a co-op preschool</h3>
+        <div class="date">March 2026</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="fbrand">
+        <img src="assets/logo-t.png" alt="Oriole" style="filter:brightness(0) invert(1)">
+        <p style="max-width:30ch">A non-profit, parent co-operative nursery school in the heart of Deer Park, Toronto.</p>
+      </div>
+      <div>
+        <h4>Programs</h4>
+        <a href="toddler.html">Toddler</a><a href="junior.html">Junior Preschool</a><a href="senior.html">Senior Preschool</a><a href="summer.html">Summer Camp</a>
+      </div>
+      <div>
+        <h4>Visit</h4>
+        <a href="mailto:registrar@oriolenurseryschool.com">Book a Tour</a><a href="application.html">How to Enrol</a><a href="#">Schedule &amp; Fees</a><a href="#">FAQs</a>
+      </div>
+      <div>
+        <h4>Find us</h4>
+        <a>Christ Church Deer Park</a>
+        <a>Entrance on Heath St. W, Toronto</a>
+        <a href="tel:4169601293">416 960 1293</a>
+        <a href="mailto:registrar@oriolenurseryschool.com">registrar@oriolenurseryschool.com</a>
+      </div>
+    </div>
+    <div class="fbot">
+      <span>© 2026 Oriole Nursery School · Non-profit co-operative</span>
+      <span>Instagram · Facebook</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  let i=0; const slides=document.querySelectorAll('.tst .slide'); const dots=document.querySelectorAll('.dots button');
+  function go(n){slides[i].classList.remove('on');dots[i].classList.remove('on');i=n;slides[i].classList.add('on');dots[i].classList.add('on');}
+  setInterval(()=>go((i+1)%slides.length),4500);
+</script>
+<script>
+(function(){
+  var go=document.getElementById('ageGo'), sel=document.getElementById('age');
+  if(go&&sel){
+    var map=['toddler.html','toddler.html','junior.html','senior.html'];
+    go.addEventListener('click',function(e){e.preventDefault();window.location.href=map[sel.selectedIndex]||'#programs';});
+  }
+})();
+</script>
+</body>
+</html>

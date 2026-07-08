@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summer Form 2 · Medical &amp; Emergency — Oriole Nursery School (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#5B990A;--green-deep:#46760A;--green-tint:#EEF4E2;
+    --cream:#FAF6EE;--paper:#FFFFFF;--ink:#26271F;--muted:#5E6157;--line:#E7E1D3;
+    --clay:#C8744E;--sun:#E8A33D;--peach:#FBEDE3;--radius:18px;--shadow:0 18px 50px -28px rgba(38,39,31,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.serif{font-family:'Fraunces',Georgia,serif;font-weight:500;line-height:1.12;letter-spacing:-.01em}
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--clay)}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;font-weight:600;font-size:.95rem;padding:.85rem 1.5rem;border-radius:100px;border:1.5px solid transparent;cursor:pointer;transition:.2s;white-space:nowrap}
+  .btn-sun{background:var(--clay);color:#fff}.btn-sun:hover{background:#b1623f}
+  .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}.btn-ghost:hover{border-color:var(--clay);color:var(--clay)}
+  section{padding:54px 0}
+
+  header{position:sticky;top:0;z-index:50;background:rgba(250,246,238,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:78px}
+  .brand img{height:52px;width:auto}
+  nav.links{display:flex;gap:28px;align-items:center;font-weight:500;font-size:.95rem}
+  nav.links a:hover{color:var(--green-deep)}
+  nav.links a.active{color:var(--clay);font-weight:600}
+  .nav-cta{display:flex;align-items:center;gap:14px}
+  .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
+  .hamburger span{display:block;width:24px;height:2.5px;background:var(--ink);border-radius:2px}
+  .crumb{font-size:.85rem;color:var(--muted);padding:18px 0 0}
+  .crumb a:hover{color:var(--clay)}
+
+  .fhero{background:linear-gradient(120deg,var(--clay) 0%,#a85a37 100%);color:#fff}
+  .fhero .wrap{padding:44px 28px 40px}
+  .fhero .he{display:inline-block;font-size:.74rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.18);padding:.42rem .9rem;border-radius:100px}
+  .fhero h1{font-size:clamp(1.9rem,4vw,2.9rem);margin:14px 0 8px}
+  .fhero p{font-size:1.06rem;max-width:54ch;opacity:.95}
+
+  .prog{background:var(--peach);border-bottom:1px solid #F0D8C7}
+  .prog .wrap{display:flex;gap:10px;flex-wrap:wrap;padding:16px 28px}
+  .pstep{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:100px;padding:.4rem .9rem}
+  .pstep .b{width:20px;height:20px;border-radius:50%;background:var(--line);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem}
+  .pstep.done{color:var(--green-deep)}
+  .pstep.done .b{background:var(--green)}
+  .pstep.on{color:#fff;background:var(--clay);border-color:var(--clay)}
+  .pstep.on .b{background:#fff;color:var(--clay)}
+
+  .formwrap{max-width:820px;margin:0 auto;padding:0 28px}
+  .fgroup{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:30px 30px 32px;margin-bottom:22px;box-shadow:0 10px 40px -32px rgba(38,39,31,.4)}
+  .gh{display:flex;align-items:baseline;gap:12px;margin-bottom:18px}
+  .gh .gn{font-family:'Fraunces',serif;color:var(--clay);font-weight:600;font-size:1.05rem;flex:none}
+  .gh h2{font-size:1.3rem}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .field.full{grid-column:1 / -1}
+  label.fl{display:block;font-size:.84rem;font-weight:600;margin-bottom:6px}
+  label.fl .req{color:var(--clay)}
+  .field input,.field select,.field textarea{width:100%;padding:.8rem 1rem;border-radius:12px;border:1.5px solid var(--line);font:inherit;background:#fff;transition:.15s}
+  .field textarea{min-height:80px;resize:vertical}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--clay);box-shadow:0 0 0 3px rgba(200,116,78,.15)}
+  .hint{font-size:.82rem;color:var(--muted);margin-top:6px}
+  .checkrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+  .chk{display:inline-flex;align-items:center;gap:9px;border:1.5px solid var(--line);border-radius:12px;padding:.7rem 1rem;cursor:pointer;font-size:.92rem;font-weight:500;transition:.15s}
+  .chk:hover{border-color:var(--clay)}
+  .chk input{width:17px;height:17px;accent-color:var(--clay);cursor:pointer}
+
+  .callout{background:#FFF8E6;border:1px solid var(--sun);border-radius:14px;padding:18px 20px;margin-bottom:22px}
+  .callout h3{font-size:1.02rem;color:#8a6410;margin-bottom:4px}
+  .callout p{font-size:.92rem;color:var(--muted)}
+
+  .submitrow{text-align:center;margin-top:6px}
+  .submitrow .btn{width:100%;max-width:420px;justify-content:center;font-size:1rem;padding:1rem 1.5rem}
+  .submitrow .fine{font-size:.82rem;color:var(--muted);margin-top:12px}
+
+  footer{background:var(--ink);color:#CFCFC4;padding:54px 0 28px;font-size:.92rem;margin-top:20px}
+  .fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:36px}
+  footer h4{color:#fff;font-family:'Fraunces',serif;font-size:1.05rem;margin-bottom:14px;font-weight:600}
+  footer a{display:block;margin-bottom:8px;color:#CFCFC4}footer a:hover{color:#fff}
+  .fbrand img{height:54px;margin-bottom:14px}
+  .fbot{border-top:1px solid rgba(255,255,255,.13);margin-top:38px;padding-top:18px;display:flex;justify-content:space-between;font-size:.8rem;color:#8E9082;flex-wrap:wrap;gap:10px}
+  .note{background:#FFF8E6;border:1px dashed var(--sun);color:#7a5b12;font-size:.82rem;padding:10px 16px;text-align:center}
+
+  @media(max-width:900px){
+    nav.links{display:none}.hamburger{display:flex}
+    .nav{height:66px}.brand img{height:44px}.btn{padding:.7rem 1.15rem;font-size:.9rem}
+    .grid2{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr}
+    section{padding:42px 0}
+  }
+</style>
+<script src="gate.js"></script>
+</head>
+<body>
+
+<div class="note">Design mockup — Summer Camp Form 2 (Medical &amp; Emergency), new families only. Fields mirror a typical medical form; confirm against the live Wix form before connecting.</div>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><img src="assets/logo-t.png" alt="Oriole Nursery School"></div>
+    <nav class="links">
+      <a href="index.html">Home</a>
+      <a href="index.html#programs">Programs</a>
+      <a href="summer.html" class="active">Summer Camp</a>
+      <a href="application.html">How to Enrol</a>
+      <a href="#">Blog</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="summer-register.html">← Back to registration</a>
+      <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="crumb"><a href="index.html">Home</a> · <a href="summer.html">Summer Camp</a> · <a href="summer-register.html">Register</a> · Form 2</div></div>
+
+<!-- HERO -->
+<section class="fhero" style="padding:0">
+  <div class="wrap">
+    <span class="he">Summer Camp 2026 · Form 2 of 3</span>
+    <h1>Medical &amp; Emergency</h1>
+    <p>Health information and emergency contacts so we can keep your child safe and happy. New families only — submit separately from Form 1.</p>
+  </div>
+</section>
+
+<!-- PROGRESS -->
+<div class="prog">
+  <div class="wrap">
+    <span class="pstep done"><span class="b">✓</span> Family Registration</span>
+    <span class="pstep on"><span class="b">2</span> Medical &amp; Emergency</span>
+    <span class="pstep"><span class="b">3</span> Week Selection</span>
+  </div>
+</div>
+
+<!-- FORM -->
+<section>
+  <div class="formwrap">
+    <form onsubmit="return false">
+
+      <div class="callout">
+        <h3>💉 Immunization records required</h3>
+        <p>Your child’s space is not confirmed until immunization records are received. Mail them to the school or email a copy to <a href="mailto:heather@oriolenurseryschool.com" style="color:#8a6410;text-decoration:underline">heather@oriolenurseryschool.com</a>.</p>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">A</span><h2>Child &amp; health</h2></div>
+        <div class="grid2">
+          <div class="field"><label class="fl">Child’s full name <span class="req">*</span></label><input type="text" placeholder="As on Form 1"></div>
+          <div class="field"><label class="fl">Health card number <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" placeholder="OHIP #"></div>
+          <div class="field"><label class="fl">Family doctor <span class="req">*</span></label><input type="text" placeholder="Doctor’s name"></div>
+          <div class="field"><label class="fl">Doctor’s phone <span class="req">*</span></label><input type="tel" placeholder="(416) 000-0000"></div>
+          <div class="field full"><label class="fl">Immunizations up to date? <span class="req">*</span></label>
+            <div class="checkrow">
+              <label class="chk"><input type="radio" name="immun"> Yes — records attached / to follow</label>
+              <label class="chk"><input type="radio" name="immun"> Exemption on file</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">B</span><h2>Allergies &amp; needs</h2></div>
+        <div class="grid2">
+          <div class="field full"><label class="fl">Allergies <span class="req">*</span></label><textarea placeholder="List any allergies and the reaction — or write “None”. Note: Oriole is a nut-safe environment."></textarea></div>
+          <div class="field full"><label class="fl">Medical conditions / medications <span style="font-weight:400;color:var(--muted)">(optional)</span></label><textarea placeholder="Asthma, epi-pen, daily medication, etc."></textarea></div>
+          <div class="field full"><label class="fl">Dietary restrictions <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" placeholder="e.g. vegetarian, dairy-free"></div>
+        </div>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">C</span><h2>Emergency contacts &amp; pickup</h2></div>
+        <p class="hint" style="margin-top:-8px;margin-bottom:14px">People we can call and who are authorized to pick up your child (other than a parent/guardian).</p>
+        <div class="grid2">
+          <div class="field"><label class="fl">Emergency contact 1 — name <span class="req">*</span></label><input type="text" placeholder="Full name"></div>
+          <div class="field"><label class="fl">Phone <span class="req">*</span></label><input type="tel" placeholder="(416) 000-0000"></div>
+          <div class="field"><label class="fl">Relationship <span class="req">*</span></label><input type="text" placeholder="e.g. Grandparent, Nanny"></div>
+          <div class="field"><label class="fl">Authorized for pickup?</label>
+            <select><option selected>Yes</option><option>No</option></select>
+          </div>
+          <div class="field"><label class="fl">Emergency contact 2 — name <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" placeholder="Full name"></div>
+          <div class="field"><label class="fl">Phone</label><input type="tel" placeholder="(416) 000-0000"></div>
+        </div>
+      </div>
+
+      <div class="submitrow">
+        <button class="btn btn-sun">Save &amp; continue to Form 3 →</button>
+        <p class="fine">Next: choose your weeks on Form 3 (Week Selection).</p>
+      </div>
+
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="fbrand">
+        <img src="assets/logo-t.png" alt="Oriole" style="filter:brightness(0) invert(1)">
+        <p style="max-width:30ch">A non-profit, parent co-operative nursery school in the heart of Deer Park, Toronto. Since 1948.</p>
+      </div>
+      <div><h4>Programs</h4><a href="toddler.html">Toddler</a><a href="junior.html">Junior Preschool</a><a href="senior.html">Senior Preschool</a><a href="summer.html">Summer Camp</a></div>
+      <div><h4>Register</h4><a href="summer-register.html">Summer Registration</a><a href="summer-form1.html">Form 1 · Family</a><a href="summer-form2.html">Form 2 · Medical</a><a href="summer-form3.html">Form 3 · Weeks</a></div>
+      <div><h4>Find us</h4><a>Christ Church Deer Park</a><a>Entrance on Heath St. W, Toronto</a><a href="tel:4169601293">416 960 1293</a><a href="mailto:heather@oriolenurseryschool.com">heather@oriolenurseryschool.com</a></div>
+    </div>
+    <div class="fbot"><span>© 2026 Oriole Nursery School · Non-profit co-operative · Since 1948</span><span>Instagram · Facebook</span></div>
+  </div>
+</footer>
+
+</body>
+</html>
