@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Summer Form 3 · Week Selection — Oriole Nursery School (mockup)</title>
+<title>Summer Form 4 · Consent &amp; Waiver — Oriole Nursery School (mockup)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,41 +53,26 @@
   .pstep.on{color:#fff;background:var(--clay);border-color:var(--clay)}
   .pstep.on .b{background:#fff;color:var(--clay)}
 
-  .formwrap{max-width:920px;margin:0 auto;padding:0 28px}
+  .formwrap{max-width:820px;margin:0 auto;padding:0 28px}
   .fgroup{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:30px 30px 32px;margin-bottom:22px;box-shadow:0 10px 40px -32px rgba(38,39,31,.4)}
-  .gh{display:flex;align-items:baseline;gap:12px;margin-bottom:18px}
+  .gh{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
   .gh .gn{font-family:'Fraunces',serif;color:var(--clay);font-weight:600;font-size:1.05rem;flex:none}
   .gh h2{font-size:1.3rem}
+  .fgroup p.policy{color:var(--muted);font-size:.95rem}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .field.full{grid-column:1 / -1}
   label.fl{display:block;font-size:.84rem;font-weight:600;margin-bottom:6px}
   label.fl .req{color:var(--clay)}
   .field input{width:100%;padding:.8rem 1rem;border-radius:12px;border:1.5px solid var(--line);font:inherit;background:#fff;transition:.15s}
   .field input:focus{outline:none;border-color:var(--clay);box-shadow:0 0 0 3px rgba(200,116,78,.15)}
-
-  /* week picker */
-  .wk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .wk{position:relative;display:block;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px 16px 46px;cursor:pointer;transition:.15s}
-  .wk:hover{border-color:var(--clay)}
-  .wk input{position:absolute;left:16px;top:18px;width:18px;height:18px;accent-color:var(--clay);cursor:pointer}
-  .wk .wn{font-family:'Fraunces',serif;font-weight:600;font-size:1rem}
-  .wk .wd{font-size:.84rem;color:var(--muted)}
-  .wk .wp{position:absolute;right:16px;top:14px;font-weight:700;font-variant-numeric:tabular-nums;font-size:.95rem;color:var(--green-deep)}
-  .wk .hol{display:inline-block;margin-top:4px;font-size:.72rem;font-weight:600;color:var(--clay);background:var(--peach);padding:.15rem .5rem;border-radius:100px}
-  .wk.sel{border-color:var(--clay);background:#FFF7F1;box-shadow:0 8px 26px -18px rgba(200,116,78,.7)}
-  .wk-total{margin-top:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--ink);color:#fff;border-radius:16px;padding:18px 24px;flex-wrap:wrap}
-  .wk-total .lbl{font-size:.9rem;opacity:.85}
-  .wk-total .amt{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:600}
-  .wk-total .amt small{font-size:.9rem;font-weight:400;opacity:.8}
-
-  .callout{background:var(--green-tint);border:1px solid #DDE9C6;border-radius:14px;padding:18px 20px;margin-bottom:22px}
-  .callout h3{font-size:1.02rem;color:var(--green-deep);margin-bottom:4px}
-  .callout p{font-size:.92rem;color:var(--muted)}
-  .pay-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .pay-row span{background:#fff;border:1px solid var(--line);border-radius:100px;padding:.45rem .9rem;font-size:.86rem;font-weight:600}
+  .hint{font-size:.82rem;color:var(--muted);margin-top:6px}
+  .agree{background:var(--green-tint);border:1px solid #DCE6C8;border-radius:14px;padding:18px 20px;margin-bottom:18px}
+  .agree label{display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-weight:500;font-size:.95rem}
+  .agree input{width:19px;height:19px;accent-color:var(--green);cursor:pointer;flex:none;margin-top:3px}
+  .sig{font-family:'Fraunces',serif;font-style:italic;font-size:1.15rem}
 
   .submitrow{text-align:center;margin-top:6px}
-  .submitrow .btn{width:100%;max-width:440px;justify-content:center;font-size:1rem;padding:1rem 1.5rem}
+  .submitrow .btn{width:100%;max-width:420px;justify-content:center;font-size:1rem;padding:1rem 1.5rem}
   .submitrow .fine{font-size:.82rem;color:var(--muted);margin-top:12px}
 
   footer{background:var(--ink);color:#CFCFC4;padding:54px 0 28px;font-size:.92rem;margin-top:20px}
@@ -101,7 +86,7 @@
   @media(max-width:900px){
     nav.links{display:none}.hamburger{display:flex}
     .nav{height:66px}.brand img{height:44px}.btn{padding:.7rem 1.15rem;font-size:.9rem}
-    .grid2{grid-template-columns:1fr}.wk-grid{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr}
+    .grid2{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr}
     section{padding:42px 0}
   }
 </style>
@@ -109,7 +94,7 @@
 </head>
 <body>
 
-<div class="note">Design mockup — Summer Camp Form 3 (Week Selection) in the new look &amp; feel. Week dates/holiday closures to be confirmed against the 2026 calendar.</div>
+<div class="note">Design mockup — Summer Camp Form 4 (Consent &amp; Waiver). Policy text supplied by the school (2026-07-09) — do not edit without Heather's approval.</div>
 
 <header>
   <div class="wrap nav">
@@ -128,14 +113,14 @@
   </div>
 </header>
 
-<div class="wrap"><div class="crumb"><a href="index.html">Home</a> · <a href="summer.html">Summer Camp</a> · <a href="summer-register.html">Register</a> · Form 3</div></div>
+<div class="wrap"><div class="crumb"><a href="index.html">Home</a> · <a href="summer.html">Summer Camp</a> · <a href="summer-register.html">Register</a> · Form 4</div></div>
 
 <!-- HERO -->
 <section class="fhero" style="padding:0">
   <div class="wrap">
-    <span class="he">Summer Camp 2026 · Form 3 of 4</span>
-    <h1>Week Selection</h1>
-    <p>Choose the weeks you’d like for your child. All families complete this form.</p>
+    <span class="he">Summer Camp 2026 · Form 4 of 4</span>
+    <h1>Consent &amp; Waiver</h1>
+    <p>Please read each policy below, then sign at the bottom. All families complete this form.</p>
   </div>
 </section>
 
@@ -144,8 +129,8 @@
   <div class="wrap">
     <span class="pstep done"><span class="b">✓</span> Family Registration</span>
     <span class="pstep done"><span class="b">✓</span> Medical &amp; Emergency</span>
-    <span class="pstep on"><span class="b">3</span> Week Selection</span>
-    <span class="pstep"><span class="b">4</span> Consent &amp; Waiver</span>
+    <span class="pstep done"><span class="b">✓</span> Week Selection</span>
+    <span class="pstep on"><span class="b">4</span> Consent &amp; Waiver</span>
   </div>
 </div>
 
@@ -155,7 +140,7 @@
     <form onsubmit="return false">
 
       <div class="fgroup">
-        <div class="gh"><span class="gn">A</span><h2>Camper</h2></div>
+        <div class="gh"><span class="gn">A</span><h2>Child</h2></div>
         <div class="grid2">
           <div class="field"><label class="fl">Child’s full name <span class="req">*</span></label><input type="text" placeholder="As on Form 1"></div>
           <div class="field"><label class="fl">Parent email <span class="req">*</span></label><input type="email" placeholder="you@email.com"></div>
@@ -163,37 +148,46 @@
       </div>
 
       <div class="fgroup">
-        <div class="gh"><span class="gn">B</span><h2>Choose your weeks</h2></div>
-        <p style="color:var(--muted);font-size:.95rem;margin-top:-8px;margin-bottom:18px">Book any number of weeks — no full-summer commitment. Holiday weeks are priced for four days.</p>
-        <div class="wk-grid" id="wkGrid">
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 1</span><span class="wd">June 15 – 19</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 2</span><span class="wd">June 22 – 26</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="265"><span class="wn">Week 3</span><span class="wd">June 29 – July 3</span><span class="wp">$265</span><span class="hol">Closed July 1</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 4</span><span class="wd">July 6 – 10</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 5</span><span class="wd">July 13 – 17</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 6</span><span class="wd">July 20 – 24</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 7</span><span class="wd">July 27 – 31</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="265"><span class="wn">Week 8</span><span class="wd">August 3 – 7</span><span class="wp">$265</span><span class="hol">Closed Aug 3</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 9</span><span class="wd">August 10 – 14</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 10</span><span class="wd">August 17 – 21</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 11</span><span class="wd">August 24 – 28</span><span class="wp">$325</span></label>
-          <label class="wk"><input type="checkbox" data-price="325"><span class="wn">Week 12</span><span class="wd">Aug 31 – Sept 4</span><span class="wp">$325</span></label>
-        </div>
-        <div class="wk-total">
-          <div><div class="lbl">Weeks selected</div><div class="amt" id="wkCount">0 weeks</div></div>
-          <div style="text-align:right"><div class="lbl">Estimated total</div><div class="amt">$<span id="wkSum">0</span> <small>+ HST if applicable</small></div></div>
-        </div>
+        <div class="gh"><span class="gn">1</span><h2>Medical Consent</h2></div>
+        <p class="policy">I understand that in the event of an emergency, a doctor may have to treat my child when the parents/guardians cannot be contacted. I understand every effort will be made to reach the parents/guardians. If, at any time, medical treatment is necessary due to such circumstances as an accident, sudden illness, or emergency, I authorize that this treatment may be given to my child. I understand that any expense incurred for such treatment is my responsibility.</p>
       </div>
 
-      <div class="callout">
-        <h3>💳 Payment &amp; confirmation</h3>
-        <p>After submitting, pay by PayPal, cheque or e-transfer (contact <a href="mailto:heather@oriolenurseryschool.com" style="color:var(--green-deep);text-decoration:underline">heather@oriolenurseryschool.com</a> for details). Spaces are confirmed once payment and immunization records are received, and are <b>non-refundable and non-transferable</b>.</p>
-        <div class="pay-row"><span>PayPal</span><span>Cheque</span><span>e-Transfer</span></div>
+      <div class="fgroup">
+        <div class="gh"><span class="gn">2</span><h2>Waiver</h2></div>
+        <p class="policy">I waive and release Oriole Nursery School and its representatives from any and all claims, demands, actions, or causes of action which may arise out of accident, illness, injury, or damage which may occur to the above named child or his/her property while participating in the school activities and on and off site excursions. I also assume and accept all risk, danger and hazards in connection with Oriole Nursery School.</p>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">3</span><h2>Forms</h2></div>
+        <p class="policy">I agree to submit completed immunization records and all other required forms prior to my child starting school. Should the school not receive these forms, my child may not attend until they are submitted.</p>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">4</span><h2>Nut-Free Policy</h2></div>
+        <p class="policy">Since many children have life-threatening allergies to nuts and tree nuts, Oriole Nursery School is a nut-free and tree-nut free school. Children are not permitted to bring in outside food into the school or playground. No food shall be packed in a child’s backpack or pockets. I understand and will adhere to the above policy.</p>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">5</span><h2>Hand Sanitizer, Sunscreen, Diaper Creams, Lip Balm and Lotions</h2></div>
+        <p class="policy">I authorize my child (named above) to use hand sanitizer supplied by Oriole, when soap and water is not available. I also authorize the other above items to be applied to my child, should I supply these items for use, when prearranged with the teachers. (Items must be clearly labelled with the child’s name, in their original packaging, and will be inaccessible to the children.)</p>
+      </div>
+
+      <div class="agree">
+        <label><input type="checkbox" required> <span><b>I agree to the above policies.</b> I have read and understood sections 1–5 and agree on behalf of my child.</span></label>
+      </div>
+
+      <div class="fgroup">
+        <div class="gh"><span class="gn">✍</span><h2>Signature</h2></div>
+        <div class="grid2">
+          <div class="field"><label class="fl">Parent / guardian full name (signature) <span class="req">*</span></label><input type="text" class="sig" placeholder="Type your full name"></div>
+          <div class="field"><label class="fl">Date <span class="req">*</span></label><input type="date"></div>
+        </div>
+        <p class="hint">Typing your full name here acts as your electronic signature.</p>
       </div>
 
       <div class="submitrow">
-        <button class="btn btn-sun">Submit my week selection →</button>
-        <p class="fine">Next: sign the Consent &amp; Waiver (Form 4). We’ll confirm your weeks by email once payment &amp; records are received.</p>
+        <button class="btn btn-sun">Submit Consent &amp; Waiver →</button>
+        <p class="fine">This completes your registration forms. We’ll confirm your weeks and payment details by email.</p>
       </div>
 
     </form>
@@ -215,25 +209,6 @@
     <div class="fbot"><span>© 2026 Oriole Nursery School · Non-profit co-operative · Since 1948</span><span>Instagram · Facebook</span></div>
   </div>
 </footer>
-
-<script>
-  (function(){
-    var boxes = document.querySelectorAll('#wkGrid input[type=checkbox]');
-    var sumEl = document.getElementById('wkSum');
-    var countEl = document.getElementById('wkCount');
-    function update(){
-      var total = 0, n = 0;
-      boxes.forEach(function(b){
-        b.closest('.wk').classList.toggle('sel', b.checked);
-        if(b.checked){ total += parseInt(b.dataset.price,10); n++; }
-      });
-      sumEl.textContent = total.toLocaleString();
-      countEl.textContent = n + (n===1 ? ' week' : ' weeks');
-    }
-    boxes.forEach(function(b){ b.addEventListener('change', update); });
-    update();
-  })();
-</script>
 
 </body>
 </html>

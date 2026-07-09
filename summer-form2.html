@@ -122,7 +122,7 @@
 <!-- HERO -->
 <section class="fhero" style="padding:0">
   <div class="wrap">
-    <span class="he">Summer Camp 2026 · Form 2 of 3</span>
+    <span class="he">Summer Camp 2026 · Form 2 of 4</span>
     <h1>Medical &amp; Emergency</h1>
     <p>Health information and emergency contacts so we can keep your child safe and happy. New families only — submit separately from Form 1.</p>
   </div>
@@ -134,6 +134,7 @@
     <span class="pstep done"><span class="b">✓</span> Family Registration</span>
     <span class="pstep on"><span class="b">2</span> Medical &amp; Emergency</span>
     <span class="pstep"><span class="b">3</span> Week Selection</span>
+    <span class="pstep"><span class="b">4</span> Consent &amp; Waiver</span>
   </div>
 </div>
 
@@ -143,23 +144,28 @@
     <form onsubmit="return false">
 
       <div class="callout">
-        <h3>💉 Immunization records required</h3>
-        <p>Your child’s space is not confirmed until immunization records are received. Mail them to the school or email a copy to <a href="mailto:heather@oriolenurseryschool.com" style="color:#8a6410;text-decoration:underline">heather@oriolenurseryschool.com</a>.</p>
+        <h3>📋 Immunization records required</h3>
+        <p>Your child’s space is not confirmed until immunization records are received. Upload a copy below, or email it later to <a href="mailto:heather@oriolenurseryschool.com" style="color:#8a6410;text-decoration:underline">heather@oriolenurseryschool.com</a>.</p>
       </div>
 
       <div class="fgroup">
         <div class="gh"><span class="gn">A</span><h2>Child &amp; health</h2></div>
         <div class="grid2">
-          <div class="field"><label class="fl">Child’s full name <span class="req">*</span></label><input type="text" placeholder="As on Form 1"></div>
-          <div class="field"><label class="fl">Health card number <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" placeholder="OHIP #"></div>
+          <div class="field full"><label class="fl">Child’s full name <span class="req">*</span></label><input type="text" placeholder="As on Form 1"></div>
+          <div class="field"><label class="fl">Health card number <span class="req">*</span></label><input type="text" placeholder="OHIP #"></div>
+          <div class="field"><label class="fl">Version code <span class="req">*</span></label><input type="text" placeholder="e.g. AB"></div>
           <div class="field"><label class="fl">Family doctor <span class="req">*</span></label><input type="text" placeholder="Doctor’s name"></div>
           <div class="field"><label class="fl">Doctor’s phone <span class="req">*</span></label><input type="tel" placeholder="(416) 000-0000"></div>
           <div class="field full"><label class="fl">Immunizations up to date? <span class="req">*</span></label>
             <div class="checkrow">
-              <label class="chk"><input type="radio" name="immun"> Yes — records attached / to follow</label>
-              <label class="chk"><input type="radio" name="immun"> Exemption on file</label>
+              <label class="chk"><input type="radio" name="immun" id="immUp"> Upload records now</label>
+              <label class="chk"><input type="radio" name="immun" id="immLater"> I’ll email them later</label>
             </div>
+            <div class="field" id="immFile" style="margin-top:12px" hidden><input type="file" accept=".pdf,.jpg,.jpeg,.png"><p class="hint">PDF or photo of your child’s immunization record.</p></div>
           </div>
+          <div class="field full"><label class="fl">Please describe common signs and symptoms that your child displays when they are not feeling well <span class="req">*</span></label><textarea placeholder="i.e. irritable, rosy cheeks, lethargy, etc."></textarea></div>
+          <div class="field full"><label class="fl">Please list, with dates, any past illnesses, operations, and/or communicable diseases <span class="req">*</span></label><textarea placeholder="i.e. chicken pox — or write “None”"></textarea></div>
+          <div class="field full"><label class="fl">Is there any other health information that the teachers should know about? <span class="req">*</span></label><textarea placeholder="i.e. speech concerns, behavioural patterns, fears etc. — or write “None”"></textarea></div>
         </div>
       </div>
 
@@ -173,17 +179,26 @@
       </div>
 
       <div class="fgroup">
-        <div class="gh"><span class="gn">C</span><h2>Emergency contacts &amp; pickup</h2></div>
-        <p class="hint" style="margin-top:-8px;margin-bottom:14px">People we can call and who are authorized to pick up your child (other than a parent/guardian).</p>
+        <div class="gh"><span class="gn">C</span><h2>Emergency contact &amp; authorized pick-up</h2></div>
+        <p class="hint" style="margin-top:-8px;margin-bottom:14px">Everyone listed here — your emergency contact and all authorized pick-up people — is authorized to pick up your child.</p>
         <div class="grid2">
-          <div class="field"><label class="fl">Emergency contact 1 — name <span class="req">*</span></label><input type="text" placeholder="Full name"></div>
+          <div class="field"><label class="fl">Emergency contact — name <span class="req">*</span></label><input type="text" placeholder="Full name"></div>
           <div class="field"><label class="fl">Phone <span class="req">*</span></label><input type="tel" placeholder="(416) 000-0000"></div>
-          <div class="field"><label class="fl">Relationship <span class="req">*</span></label><input type="text" placeholder="e.g. Grandparent, Nanny"></div>
-          <div class="field"><label class="fl">Authorized for pickup?</label>
-            <select><option selected>Yes</option><option>No</option></select>
+          <div class="field full"><label class="fl">Relationship <span class="req">*</span></label><input type="text" placeholder="e.g. Grandparent, Nanny"></div>
+        </div>
+        <div style="margin-top:18px">
+          <label class="fl">Authorized pick-up people <span style="font-weight:400;color:var(--muted)">(most families list 4–5)</span></label>
+          <div id="pickups">
+            <div class="grid2 pickup-row" style="margin-bottom:10px">
+              <div class="field"><input type="text" placeholder="Full name"></div>
+              <div class="field"><input type="tel" placeholder="Phone"></div>
+            </div>
+            <div class="grid2 pickup-row" style="margin-bottom:10px">
+              <div class="field"><input type="text" placeholder="Full name"></div>
+              <div class="field"><input type="tel" placeholder="Phone"></div>
+            </div>
           </div>
-          <div class="field"><label class="fl">Emergency contact 2 — name <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" placeholder="Full name"></div>
-          <div class="field"><label class="fl">Phone</label><input type="tel" placeholder="(416) 000-0000"></div>
+          <button type="button" class="btn btn-ghost" id="addPickup" style="margin-top:4px">+ Add another person</button>
         </div>
       </div>
 
@@ -205,12 +220,27 @@
         <p style="max-width:30ch">A non-profit, parent co-operative nursery school in the heart of Deer Park, Toronto. Since 1948.</p>
       </div>
       <div><h4>Programs</h4><a href="toddler.html">Toddler</a><a href="junior.html">Junior Preschool</a><a href="senior.html">Senior Preschool</a><a href="summer.html">Summer Camp</a></div>
-      <div><h4>Register</h4><a href="summer-register.html">Summer Registration</a><a href="summer-form1.html">Form 1 · Family</a><a href="summer-form2.html">Form 2 · Medical</a><a href="summer-form3.html">Form 3 · Weeks</a></div>
+      <div><h4>Register</h4><a href="summer-register.html">Summer Registration</a><a href="summer-form1.html">Form 1 · Family</a><a href="summer-form2.html">Form 2 · Medical</a><a href="summer-form3.html">Form 3 · Weeks</a><a href="summer-form-consent.html">Form 4 · Consent</a></div>
       <div><h4>Find us</h4><a>Christ Church Deer Park</a><a>Entrance on Heath St. W, Toronto</a><a href="tel:4169601293">416 960 1293</a><a href="mailto:heather@oriolenurseryschool.com">heather@oriolenurseryschool.com</a></div>
     </div>
     <div class="fbot"><span>© 2026 Oriole Nursery School · Non-profit co-operative · Since 1948</span><span>Instagram · Facebook</span></div>
   </div>
 </footer>
+
+<script>
+  (function(){
+    var up = document.getElementById('immUp'), later = document.getElementById('immLater'), file = document.getElementById('immFile');
+    function toggle(){ file.hidden = !up.checked; }
+    up.addEventListener('change', toggle); later.addEventListener('change', toggle);
+
+    document.getElementById('addPickup').addEventListener('click', function(){
+      var rows = document.getElementById('pickups');
+      var row = rows.querySelector('.pickup-row').cloneNode(true);
+      row.querySelectorAll('input').forEach(function(i){ i.value = ''; });
+      rows.appendChild(row);
+    });
+  })();
+</script>
 
 </body>
 </html>
