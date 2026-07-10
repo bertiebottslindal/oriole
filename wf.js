@@ -68,6 +68,13 @@
     document.head.appendChild(a);
   })();
 
+  // ---- keep the hidden registration package out of search indexes ----
+  if (location.pathname === '/registration-form') {
+    var nr = document.createElement('meta');
+    nr.name = 'robots'; nr.content = 'noindex, nofollow';
+    document.head.appendChild(nr);
+  }
+
   ready(function () {
     // ---- real placeholders (Webflow forces "Example text") ----
     var ph = {
