@@ -316,6 +316,17 @@
       syncWeeks();
     }
 
+    // ---- map embed (iframes can't ship via the build API) ----
+    var mapBox = document.querySelector('.on17-map');
+    if (mapBox && !mapBox.querySelector('iframe')) {
+      var mf = document.createElement('iframe');
+      mf.src = 'https://www.google.com/maps?q=Oriole+Nursery+School,+Christ+Church+Deer+Park,+Toronto&output=embed';
+      mf.style.cssText = 'width:100%;height:100%;min-height:380px;border:0;display:block';
+      mf.loading = 'lazy';
+      mf.setAttribute('title', 'Map to Oriole Nursery School');
+      mapBox.appendChild(mf);
+    }
+
     // ---- testimonial rotator ----
     var slides = document.querySelectorAll('.on-tsl');
     if (slides.length > 1) {
