@@ -31,7 +31,11 @@
     '.on-ddmenu-in{background:#fff;border:1px solid #E7E1D3;border-radius:14px;box-shadow:0 18px 50px -28px rgba(38,39,31,.45);padding:8px;display:flex;flex-direction:column}' +
     '.on-dd-a{padding:10px 14px;border-radius:9px;font-size:.92rem;white-space:nowrap;color:#26271F;text-decoration:none;font-family:Inter,Arial,sans-serif;font-weight:500;transition:all .15s ease}' +
     '.on-dd-a:hover{background:#EEF4E2;color:#46760A}' +
-    '.on-dd-s{color:#5E6157;font-weight:400}';
+    '.on-dd-s{color:#5E6157;font-weight:400}' +
+    'select.on-fi{height:auto;min-height:48px;line-height:1.4;padding-top:.65rem;padding-bottom:.65rem}' +
+    '.on-gbadge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);color:#26271F;font-family:Inter,Arial,sans-serif;font-weight:700;font-size:.85rem;padding:.45rem .9rem;border-radius:100px;margin:14px 0 6px}' +
+    '.on-gbadge-s{color:#E2A93B;letter-spacing:2px}' +
+    '.on-replynote{font-family:Inter,Arial,sans-serif;font-size:.8rem;color:#5E6157;margin-top:10px;text-align:center}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -181,6 +185,55 @@
         });
       });
     }, 4000);
+
+    // ---- CRO: lead-form anchor + Book a Tour CTAs -> form ----
+    var lead = document.querySelector('.on-lead');
+    if (lead) lead.id = 'get-info';
+    document.querySelectorAll('a').forEach(function (a) {
+      var href = a.getAttribute('href') || '';
+      if (href.indexOf('mailto:info@oriolenurseryschool.com') === 0 && /book a tour/i.test(a.textContent)) {
+        a.setAttribute('href', lead ? '#get-info' : '/#get-info');
+      }
+    });
+    if (location.hash === '#get-info' && lead) {
+      setTimeout(function () { lead.scrollIntoView({ behavior: 'smooth' }); }, 300);
+    }
+
+    // ---- CRO: response-time reassurance under every form ----
+    document.querySelectorAll('.on-form').forEach(function (w) {
+      var n = document.createElement('div');
+      n.className = 'on-replynote';
+      n.textContent = 'We reply within one business day.';
+      w.appendChild(n);
+    });
+
+    // ---- CRO: soften Handbook form (home): last name + phone optional ----
+    if (location.pathname === '/' || location.pathname === '') {
+      document.querySelectorAll('.on-form input[name="Last Name"], .on-form input[name="Phone"]').forEach(function (el) {
+        el.required = false;
+        var lab = el.parentNode.querySelector('label');
+        if (lab) lab.textContent = lab.textContent.replace(' *', ' (optional)');
+      });
+    }
+
+    // ---- CRO: Google rating badge under hero headline ----
+    document.querySelectorAll('.on-hero-btns').forEach(function (btns) {
+      var b = document.createElement('div');
+      b.className = 'on-gbadge';
+      b.innerHTML = '<span class="on-gbadge-s">\u2605\u2605\u2605\u2605\u2605</span> 5.0 on Google';
+      btns.parentNode.insertBefore(b, btns);
+    });
+
+    // ---- CRO: directions line in footer Find us column ----
+    document.querySelectorAll('.on-ft-col').forEach(function (col) {
+      if (col.textContent.indexOf('Christ Church Deer Park') === -1) return;
+      var a = document.createElement('a');
+      a.className = 'on-ft-a';
+      a.href = 'https://maps.google.com/?q=Oriole+Nursery+School+Toronto';
+      a.target = '_blank';
+      a.textContent = '2-minute walk from Yonge & St. Clair \u00b7 Directions \u2192';
+      col.appendChild(a);
+    });
 
     // ---- testimonial rotator ----
     var slides = document.querySelectorAll('.on-tsl');
