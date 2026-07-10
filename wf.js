@@ -93,7 +93,9 @@
       'New or Returning': ['New family', 'Returning family'],
       'First Dropoff': ['Yes', 'No'],
       'Toilet Trained': ['Yes', 'Mostly', 'Not yet'],
-      'EpiPen': ['No', 'Yes']
+      'EpiPen': ['No', 'Yes'],
+      'Child Class': ['Toddler', 'Junior Preschool', 'Senior Preschool'],
+      'Duty Day Participating': ['Yes \u2014 participating', 'No \u2014 non-participating']
     };
     document.querySelectorAll('.on-form select').forEach(function (s) {
       if (s.options.length > 0) return;
