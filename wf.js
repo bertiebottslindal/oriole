@@ -35,7 +35,23 @@
     'select.on-fi{height:auto;min-height:48px;line-height:1.4;padding-top:.65rem;padding-bottom:.65rem}' +
     '.on-gbadge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);color:#26271F;font-family:Inter,Arial,sans-serif;font-weight:700;font-size:.85rem;padding:.45rem .9rem;border-radius:100px;margin:14px 0 6px}' +
     '.on-gbadge-s{color:#E2A93B;letter-spacing:2px}' +
-    '.on-replynote{font-family:Inter,Arial,sans-serif;font-size:.8rem;color:#5E6157;margin-top:10px;text-align:center}';
+    '.on-replynote{font-family:Inter,Arial,sans-serif;font-size:.8rem;color:#5E6157;margin-top:10px;text-align:center}' +
+    '@media (prefers-reduced-motion: no-preference){' +
+    '.on-rv{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease}' +
+    '.on-rv-in{opacity:1;transform:none}' +
+    '@keyframes onpulse{0%{box-shadow:0 0 0 0 rgba(91,153,10,.45)}70%{box-shadow:0 0 0 9px rgba(91,153,10,0)}100%{box-shadow:0 0 0 0 rgba(91,153,10,0)}}' +
+    '.on-xpill{animation:onpulse 2s infinite}' +
+    '.on-pulse{animation:onpulse 2s infinite}' +
+    '.on-card [class*=on-card-img]{transition:transform .4s ease}' +
+    '.on-card:hover [class*=on-card-img]{transform:scale(1.05)}' +
+    '.on4-ts [class*=tph]{transition:transform .4s ease}' +
+    '.on4-ts:hover [class*=tph]{transform:scale(1.06)}' +
+    '.on9-g1:hover,.on9-g2:hover,.on9-g3:hover,.on9-g4:hover,.on9-g5:hover{transform:scale(1.015)}' +
+    '.on9-g1,.on9-g2,.on9-g3,.on9-g4,.on9-g5{transition:transform .3s ease}' +
+    '.on4-ts{overflow:hidden}' +
+    '}' +
+    '.on-xpill{display:inline-block;background:#5B990A;color:#fff;font-family:Inter,Arial,sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.04em;padding:2px 10px;border-radius:100px;margin:0 6px;vertical-align:2px}' +
+    '.on-pulse{border-radius:100px}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -233,6 +249,45 @@
       a.target = '_blank';
       a.textContent = '2-minute walk from Yonge & St. Clair \u00b7 Directions \u2192';
       col.appendChild(a);
+    });
+
+    // ---- anchor for hero link after age-picker removal ----
+    var progs = document.querySelector('.on-progs');
+    if (progs) progs.id = 'classes';
+
+    // ---- scroll-reveal (light fade-up, staggered per container) ----
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+      var rvSel = '.on-card,.on-step,.on2-role,.on7-card,.on9-inccard,.on9-th,.on10-wk,.on10-fcard,.on4-ts,.on4-fxc,.on2-opt,.on2-opt-hl,.on12-q,.on9-feecard,.on4-det,.on10-callout,.on10-callout2';
+      var els = Array.prototype.slice.call(document.querySelectorAll(rvSel));
+      var counts = [];
+      els.forEach(function (el) {
+        var rec = counts.find(function (c) { return c.p === el.parentNode; });
+        if (!rec) { rec = { p: el.parentNode, n: 0 }; counts.push(rec); }
+        el.style.transitionDelay = Math.min(rec.n * 60, 420) + 'ms';
+        rec.n++;
+        el.classList.add('on-rv');
+      });
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('on-rv-in'); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -8% 0px' });
+      els.forEach(function (el) { io.observe(el); });
+    }
+
+    // ---- pulsing pill on extended-day mentions ----
+    document.querySelectorAll('.on-xnote').forEach(function (el) { el.classList.add('on-pulse'); });
+    document.querySelectorAll('.on-trust-num').forEach(function (el) {
+      if (el.textContent.trim() === 'New') {
+        el.innerHTML = '<span class="on-xpill">NEW</span>';
+      }
+    });
+    document.querySelectorAll('.on3-td-l, .on6-schedlbl').forEach(function (el) {
+      if (/extended day/i.test(el.textContent)) {
+        el.innerHTML = el.innerHTML
+          .replace(/\s*\u00b7\s*NEW\b/, ' <span class="on-xpill">NEW</span>')
+          .replace(/^New\s+(Extended Day)/, '<span class="on-xpill">NEW</span> $1');
+      }
     });
 
     // ---- testimonial rotator ----
