@@ -68,9 +68,13 @@
       var n = el.parentNode.querySelector('.on-ferr');
       if (n) n.remove();
     }
-    document.querySelectorAll('form.on-form').forEach(function (f) {
+    document.querySelectorAll('.on-form form, form.on-form').forEach(function (f) {
       f.setAttribute('novalidate', 'novalidate');
-      f.addEventListener('submit', function (e) {
+    });
+    document.addEventListener('submit', function (e) {
+      var f = e.target.closest ? e.target : null;
+      if (!f || !(f.closest('.on-form'))) return;
+      {
         var ok = true;
         f.querySelectorAll('input,select').forEach(function (el) {
           if (el.type === 'submit') return;
@@ -84,8 +88,22 @@
           }
         });
         if (!ok) { e.preventDefault(); e.stopImmediatePropagation(); }
-      }, true);
-    });
+      }
+    }, true);
+
+    // Turnstile fallback: Webflow's runtime sometimes never initializes bot
+    // protection on these forms, leaving them locked. After 4s, unlock.
+    setTimeout(function () {
+      document.querySelectorAll('.on-form.w-form-loading').forEach(function (w) {
+        w.classList.remove('w-form-loading');
+        var frm = w.querySelector('form');
+        if (frm) frm.removeAttribute('data-turnstile-sitekey');
+        w.querySelectorAll('input[type="submit"]').forEach(function (b) {
+          b.disabled = false;
+          b.classList.remove('w-form-loading');
+        });
+      });
+    }, 4000);
 
     // ---- testimonial rotator ----
     var slides = document.querySelectorAll('.on-tsl');
