@@ -71,7 +71,7 @@
 
     // ---- select options (Webflow drops WHTML <option>s at publish) ----
     var selOpts = {
-      'Child Age': ['Under 18 months', '18 months \u2013 2.5 years', '2.6 \u2013 3 years', '3 \u2013 5 years'],
+      'Child Age': ['Under 18 months (for interest)', '18 months \u2013 2.5 years', '2.6 \u2013 3 years', '3 \u2013 5 years'],
       'Child Age|Summer Camp Lead Form': ['2 years', '3 years', '4 years', '5 years'],
       'Gender': ['Prefer not to say', 'Girl', 'Boy', 'Other'],
       'Class': ['Toddler \u00b7 18 months \u2013 2.5 years', 'Junior Preschool \u00b7 2.6 \u2013 3 years', 'Senior Preschool \u00b7 3 \u2013 5 years'],
