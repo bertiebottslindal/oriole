@@ -51,7 +51,11 @@
     '.on4-ts{overflow:hidden}' +
     '}' +
     '.on-xpill{display:inline-block;background:#5B990A;color:#fff;font-family:Inter,Arial,sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.04em;padding:2px 10px;border-radius:100px;margin:0 6px;vertical-align:2px}' +
-    '.on-pulse{border-radius:100px}';
+    '.on-pulse{border-radius:100px}' +
+    // media-page gallery tiles: Webflow stored a bad span-6 mobile override that collapses the 2-col mobile grid
+    '@media (max-width:767px){.on19-g6,.on19-g7{grid-column:span 2 !important}}' +
+    '.on19-g6,.on19-g7{transition:transform .3s ease}' +
+    '.on19-g6:hover,.on19-g7:hover{transform:scale(1.015)}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
