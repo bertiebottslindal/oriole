@@ -35,6 +35,28 @@
     });
     document.querySelectorAll('input[placeholder="Example text"], textarea[placeholder="Example text"]').forEach(function (el) { el.placeholder = ''; });
 
+    // ---- select options (Webflow drops WHTML <option>s at publish) ----
+    var selOpts = {
+      'Child Age': ['Under 18 months', '18 months \u2013 2.5 years', '2.6 \u2013 3 years', '3 \u2013 5 years'],
+      'Child Age|Summer Camp Lead Form': ['2 years', '3 years', '4 years', '5 years'],
+      'Gender': ['Prefer not to say', 'Girl', 'Boy', 'Other'],
+      'Class': ['Toddler \u00b7 18 months \u2013 2.5 years', 'Junior Preschool \u00b7 2.6 \u2013 3 years', 'Senior Preschool \u00b7 3 \u2013 5 years'],
+      'Schedule': ['2 mornings (Tue & Thu)', '3 mornings', '4 mornings', '5 mornings', 'Extended day \u2014 5 full days, 9:00\u20132:45 (new, ages 2.5+)'],
+      'Board Interest': ['No', 'Yes', 'Tell me more']
+    };
+    document.querySelectorAll('.on-form select').forEach(function (s) {
+      if (s.options.length > 0) return;
+      var frm = s.closest('form');
+      var fname = frm ? (frm.getAttribute('data-name') || '') : '';
+      var opts = selOpts[s.name + '|' + fname] || selOpts[s.name];
+      if (!opts) return;
+      opts.forEach(function (o) {
+        var el = document.createElement('option');
+        el.value = o; el.textContent = o;
+        s.appendChild(el);
+      });
+    });
+
     // ---- email typo auto-correction on blur ----
     var domainFixes = [
       [/\.con$/i, '.com'], [/\.cmo$/i, '.com'], [/\.ocm$/i, '.com'], [/\.comm$/i, '.com'],
