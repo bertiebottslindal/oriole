@@ -56,6 +56,18 @@
   st.textContent = css;
   document.head.appendChild(st);
 
+  // ---- favicon + webclip (site settings favicon is UI-only) ----
+  (function () {
+    var f = document.createElement('link');
+    f.rel = 'icon'; f.type = 'image/png';
+    f.href = 'https://cdn.prod.website-files.com/6a513665fb1af89aad18d8ac/6a517db696182a92af97688f_oriole-favicon-32.png';
+    document.head.appendChild(f);
+    var a = document.createElement('link');
+    a.rel = 'apple-touch-icon';
+    a.href = 'https://cdn.prod.website-files.com/6a513665fb1af89aad18d8ac/6a517db596182a92af97683d_oriole-favicon-256.png';
+    document.head.appendChild(a);
+  })();
+
   ready(function () {
     // ---- real placeholders (Webflow forces "Example text") ----
     var ph = {
