@@ -22,6 +22,20 @@
     else document.addEventListener('DOMContentLoaded', fn);
   }
 
+  // ---- injected CSS (freeform custom code unavailable on this plan) ----
+  var css = '.on-dd{position:relative}' +
+    '.on-dd-t{cursor:pointer;font-family:Inter,Arial,sans-serif;font-weight:500;font-size:.92rem;color:#26271F;padding:8px 12px;border-radius:100px;transition:all .15s ease}' +
+    '.on-dd:hover .on-dd-t{background:#EEF4E2;color:#46760A}' +
+    '.on-ddmenu{display:none;position:absolute;top:100%;left:-10px;padding-top:12px;z-index:70;min-width:250px}' +
+    '.on-dd:hover .on-ddmenu{display:block}' +
+    '.on-ddmenu-in{background:#fff;border:1px solid #E7E1D3;border-radius:14px;box-shadow:0 18px 50px -28px rgba(38,39,31,.45);padding:8px;display:flex;flex-direction:column}' +
+    '.on-dd-a{padding:10px 14px;border-radius:9px;font-size:.92rem;white-space:nowrap;color:#26271F;text-decoration:none;font-family:Inter,Arial,sans-serif;font-weight:500;transition:all .15s ease}' +
+    '.on-dd-a:hover{background:#EEF4E2;color:#46760A}' +
+    '.on-dd-s{color:#5E6157;font-weight:400}';
+  var st = document.createElement('style');
+  st.textContent = css;
+  document.head.appendChild(st);
+
   ready(function () {
     // ---- real placeholders (Webflow forces "Example text") ----
     var ph = {
