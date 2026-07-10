@@ -290,6 +290,32 @@
       }
     });
 
+    // ---- camp registration: week picker + selected-weeks sync ----
+    var wks = document.querySelectorAll('.on15-wk');
+    if (wks.length) {
+      function syncWeeks() {
+        var sel = [], total = 0;
+        wks.forEach(function (w) {
+          if (w.classList.contains('on15-wk-sel')) {
+            var label = w.querySelector('.on9-thw').textContent + ' (' + w.querySelector('.on10-wkd').textContent + ')';
+            sel.push(label);
+            total += parseInt(w.querySelector('.on10-wkp').textContent.replace(/[^0-9]/g, ''), 10);
+          }
+        });
+        var c = document.querySelector('.on15-count');
+        var s = document.querySelector('.on15-sum');
+        if (c) c.textContent = sel.length + (sel.length === 1 ? ' week' : ' weeks');
+        if (s) s.textContent = '$' + total.toLocaleString();
+        document.querySelectorAll('input[name="Selected Weeks"]').forEach(function (h) {
+          h.value = sel.length ? sel.join('; ') + ' — total $' + total.toLocaleString() : 'none selected';
+        });
+      }
+      wks.forEach(function (w) {
+        w.addEventListener('click', function () { w.classList.toggle('on15-wk-sel'); syncWeeks(); });
+      });
+      syncWeeks();
+    }
+
     // ---- testimonial rotator ----
     var slides = document.querySelectorAll('.on-tsl');
     if (slides.length > 1) {
