@@ -76,7 +76,12 @@
       'Gender': ['Prefer not to say', 'Girl', 'Boy', 'Other'],
       'Class': ['Toddler \u00b7 18 months \u2013 2.5 years', 'Junior Preschool \u00b7 2.6 \u2013 3 years', 'Senior Preschool \u00b7 3 \u2013 5 years'],
       'Schedule': ['2 mornings (Tue & Thu)', '3 mornings', '4 mornings', '5 mornings', 'Extended day \u2014 5 full days, 9:00\u20132:45 (new, ages 2.5+)'],
-      'Board Interest': ['No', 'Yes', 'Tell me more']
+      'Board Interest': ['No', 'Yes', 'Tell me more'],
+      'Camp Age': ['2 years', '3 years', '4 years', '5 years'],
+      'New or Returning': ['New family', 'Returning family'],
+      'First Dropoff': ['Yes', 'No'],
+      'Toilet Trained': ['Yes', 'Mostly', 'Not yet'],
+      'EpiPen': ['No', 'Yes']
     };
     document.querySelectorAll('.on-form select').forEach(function (s) {
       if (s.options.length > 0) return;
