@@ -87,7 +87,48 @@
             if (digits.length < 10 || digits.length > 11) { err(el, 'Please enter a valid phone number'); ok = false; }
           }
         });
-        if (!ok) { e.preventDefault(); e.stopImmediatePropagation(); }
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (!ok) return;
+        // Submit directly to the Webflow forms API (runtime handler is unreliable
+        // on these forms). response.ok checked; one retry; honest failure message.
+        var w = f.closest('.w-form') || f.parentNode;
+        var btn = f.querySelector('input[type="submit"]');
+        var orig = btn ? btn.value : '';
+        if (btn) { btn.value = btn.getAttribute('data-wait') || 'Please wait...'; btn.disabled = true; }
+        var fd = new URLSearchParams();
+        fd.append('name', f.getAttribute('data-name') || f.name || 'Form');
+        fd.append('source', location.href);
+        fd.append('test', 'false');
+        f.querySelectorAll('input,select,textarea').forEach(function (el) {
+          if (el.type === 'submit' || !el.name) return;
+          fd.append('fields[' + el.name + ']', el.value);
+        });
+        var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
+        function finish(good) {
+          if (btn) { btn.value = orig; btn.disabled = false; }
+          if (good) {
+            f.style.display = 'none';
+            var d = w.querySelector('.w-form-done');
+            if (d) d.style.display = 'block';
+          } else {
+            var fl = w.querySelector('.w-form-fail');
+            if (fl) {
+              fl.style.display = 'block';
+              fl.textContent = "Something went wrong sending your message. Please email info@oriolenurseryschool.com or call 416 960 1293 and we'll get right back to you.";
+            }
+          }
+        }
+        function post() {
+          return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+        }
+        post().then(function (r) {
+          if (r.ok) return finish(true);
+          throw new Error('bad status');
+        }).catch(function () {
+          setTimeout(function () {
+            post().then(function (r) { finish(r.ok); }).catch(function () { finish(false); });
+          }, 800);
+        });
       }
     }, true);
 
