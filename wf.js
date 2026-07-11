@@ -48,6 +48,8 @@
     '.on4-ts:hover [class*=tph]{transform:scale(1.06)}' +
     '.on9-g1:hover,.on9-g2:hover,.on9-g3:hover,.on9-g4:hover,.on9-g5:hover{transform:scale(1.015)}' +
     '.on9-g1,.on9-g2,.on9-g3,.on9-g4,.on9-g5{transition:transform .3s ease}' +
+    '.on-chip{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}' +
+    '.on-chip:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 10px 22px -12px rgba(38,39,31,.4);background-color:#EEF4E2}' +
     '.on4-ts{overflow:hidden}' +
     '}' +
     '.on-xpill{display:inline-block;background:#5B990A;color:#fff;font-family:Inter,Arial,sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.04em;padding:2px 10px;border-radius:100px;margin:0 6px;vertical-align:2px}' +
@@ -55,7 +57,14 @@
     // media-page gallery tiles: Webflow stored a bad span-6 mobile override that collapses the 2-col mobile grid
     '@media (max-width:767px){.on19-g6,.on19-g7{grid-column:span 2 !important}}' +
     '.on19-g6,.on19-g7{transition:transform .3s ease}' +
-    '.on19-g6:hover,.on19-g7:hover{transform:scale(1.015)}';
+    '.on19-g6:hover,.on19-g7:hover{transform:scale(1.015)}' +
+    // footer: long unbreakable strings (email address) overflowed the grid at tablet widths → page h-scroll
+    '.on-ft-grid>*{min-width:0}' +
+    '.on-ft-col a,.on-ft-col div{overflow-wrap:anywhere}' +
+    // testimonial prev/next arrows
+    '.on-tnav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}' +
+    '.on-tbtn{width:40px;height:40px;border-radius:100px;border:1px solid #E7E1D3;background:#fff;color:#46760A;font-size:1.1rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s ease;padding:0}' +
+    '.on-tbtn:hover{background:#EEF4E2}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -357,7 +366,7 @@
       mapBox.appendChild(mf);
     }
 
-    // ---- testimonial rotator ----
+    // ---- testimonial rotator (auto + arrows + swipe) ----
     var slides = document.querySelectorAll('.on-tsl');
     if (slides.length > 1) {
       var dots = document.querySelectorAll('.on-tdot');
@@ -365,14 +374,45 @@
       function go(n) {
         slides[i].classList.remove('on-tsl-on');
         if (dots[i]) dots[i].classList.remove('on-tdot-on');
-        i = n % slides.length;
+        i = ((n % slides.length) + slides.length) % slides.length;
         slides[i].classList.add('on-tsl-on');
         if (dots[i]) dots[i].classList.add('on-tdot-on');
       }
       function auto() { timer = setInterval(function () { go(i + 1); }, 5000); }
+      function manual(n) { clearInterval(timer); go(n); auto(); }
       dots.forEach(function (d, n) {
-        d.addEventListener('click', function () { clearInterval(timer); go(n); auto(); });
+        d.addEventListener('click', function () { manual(n); });
       });
+      var tin = slides[0].parentElement;
+      if (tin) {
+        var nav = document.createElement('div');
+        nav.className = 'on-tnav';
+        var prev = document.createElement('button');
+        prev.className = 'on-tbtn';
+        prev.type = 'button';
+        prev.setAttribute('aria-label', 'Previous review');
+        prev.innerHTML = '&#8592;';
+        var next = document.createElement('button');
+        next.className = 'on-tbtn';
+        next.type = 'button';
+        next.setAttribute('aria-label', 'Next review');
+        next.innerHTML = '&#8594;';
+        prev.addEventListener('click', function () { manual(i - 1); });
+        next.addEventListener('click', function () { manual(i + 1); });
+        nav.appendChild(prev);
+        var dotsWrap = dots.length ? dots[0].parentElement : null;
+        if (dotsWrap && dotsWrap.parentElement === tin) nav.appendChild(dotsWrap);
+        nav.appendChild(next);
+        tin.appendChild(nav);
+        var tx0 = null;
+        tin.addEventListener('touchstart', function (e) { tx0 = e.touches[0].clientX; }, { passive: true });
+        tin.addEventListener('touchend', function (e) {
+          if (tx0 === null) return;
+          var dx = e.changedTouches[0].clientX - tx0;
+          tx0 = null;
+          if (Math.abs(dx) > 40) manual(dx < 0 ? i + 1 : i - 1);
+        }, { passive: true });
+      }
       auto();
     }
   });
