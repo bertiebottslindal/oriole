@@ -115,7 +115,8 @@
       'Toilet Trained': ['Yes', 'Mostly', 'Not yet'],
       'EpiPen': ['No', 'Yes'],
       'Child Class': ['Toddler', 'Junior Preschool', 'Senior Preschool'],
-      'Duty Day Participating': ['Yes \u2014 participating', 'No \u2014 non-participating']
+      'Duty Day Participating': ['Yes \u2014 participating', 'No \u2014 non-participating'],
+      'Photo Release': ['Select an option', 'I consent to photos', 'I do not consent to photos']
     };
     document.querySelectorAll('.on-form select').forEach(function (s) {
       if (s.options.length > 0) return;
@@ -125,7 +126,9 @@
       if (!opts) return;
       opts.forEach(function (o) {
         var el = document.createElement('option');
-        el.value = o; el.textContent = o;
+        // 'Select ...' entries are placeholders: blank value so required validation forces a real choice
+        el.value = (o.indexOf('Select ') === 0) ? '' : o;
+        el.textContent = o;
         s.appendChild(el);
       });
     });
