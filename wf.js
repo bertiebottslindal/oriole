@@ -64,7 +64,8 @@
     // testimonial prev/next arrows
     '.on-tnav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}' +
     '.on-tbtn{width:40px;height:40px;border-radius:100px;border:1px solid #E7E1D3;background:#fff;color:#46760A;font-size:1.1rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s ease;padding:0}' +
-    '.on-tbtn:hover{background:#EEF4E2}';
+    '.on-tbtn:hover{background:#EEF4E2}' +
+    '.on15-wk-past{opacity:.45;pointer-events:none;cursor:default}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -335,6 +336,23 @@
     // ---- camp registration: week picker + selected-weeks sync ----
     var wks = document.querySelectorAll('.on15-wk');
     if (wks.length) {
+      // Weeks that started before the current week are no longer bookable (Heather, 2026-07-14)
+      var wkStarts = ['2026-06-15', '2026-06-22', '2026-06-29', '2026-07-06', '2026-07-13', '2026-07-20',
+        '2026-07-27', '2026-08-03', '2026-08-10', '2026-08-17', '2026-08-24', '2026-08-31'];
+      var mon = new Date();
+      mon.setHours(0, 0, 0, 0);
+      mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+      wks.forEach(function (w, i) {
+        if (!wkStarts[i]) return;
+        if (new Date(wkStarts[i] + 'T12:00:00') < mon) {
+          w.classList.add('on15-wk-past');
+          w.classList.remove('on15-wk-sel');
+          var b = document.createElement('div');
+          b.className = 'on10-hol';
+          b.textContent = 'No longer available';
+          w.appendChild(b);
+        }
+      });
       function syncWeeks() {
         var sel = [], total = 0;
         wks.forEach(function (w) {
@@ -353,7 +371,10 @@
         });
       }
       wks.forEach(function (w) {
-        w.addEventListener('click', function () { w.classList.toggle('on15-wk-sel'); syncWeeks(); });
+        w.addEventListener('click', function () {
+          if (w.classList.contains('on15-wk-past')) return;
+          w.classList.toggle('on15-wk-sel'); syncWeeks();
+        });
       });
       syncWeeks();
     }
