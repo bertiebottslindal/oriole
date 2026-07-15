@@ -380,6 +380,28 @@
 
       // ---- camp online payment (Make checkout webhook -> Stripe Checkout) ----
       var CHECKOUT_HOOK = 'https://hook.us2.make.com/i3h3pvb7c15mlgq89p7pcyqdhtlbjzl1';
+
+      // sold-out weeks: Heather ticks "Sold out" in the Airtable Camp Weeks table; the picker greys them here
+      fetch(CHECKOUT_HOOK + '?soldout=1')
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var so = (j.records || []).map(function (r) { return (r.fields || {}).Slug; });
+          var changed = false;
+          wks.forEach(function (w, i) {
+            var slug = 'week-' + (i + 1);
+            if (so.indexOf(slug) >= 0 && !w.classList.contains('on15-wk-past')) {
+              w.classList.add('on15-wk-past');
+              if (w.classList.contains('on15-wk-sel')) { w.classList.remove('on15-wk-sel'); changed = true; }
+              var b = document.createElement('div');
+              b.className = 'on10-hol';
+              b.textContent = 'Sold out';
+              w.appendChild(b);
+            }
+          });
+          if (changed) syncWeeks();
+        })
+        .catch(function () {});
+
       if (/[?&]cancelled=1/.test(location.search)) {
         var ban = document.createElement('div');
         ban.style.cssText = 'max-width:1140px;margin:110px auto -70px;padding:14px 20px;border-radius:14px;font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.95rem;background:#FDF1E3;color:#8a6410';
