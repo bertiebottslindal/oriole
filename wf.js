@@ -380,14 +380,10 @@
 
       // ---- camp online payment (Make checkout webhook -> Stripe Checkout) ----
       var CHECKOUT_HOOK = 'https://hook.us2.make.com/i3h3pvb7c15mlgq89p7pcyqdhtlbjzl1';
-      if (/[?&](paid|cancelled)=1/.test(location.search)) {
-        var ok = /[?&]paid=1/.test(location.search);
+      if (/[?&]cancelled=1/.test(location.search)) {
         var ban = document.createElement('div');
-        ban.style.cssText = 'max-width:1140px;margin:110px auto -70px;padding:14px 20px;border-radius:14px;font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.95rem;' +
-          (ok ? 'background:#EEF4E2;color:#46760A' : 'background:#FDF1E3;color:#8a6410');
-        ban.textContent = ok
-          ? 'Payment received — thank you! We’ll confirm your weeks by email once immunization records are in.'
-          : 'Payment cancelled — no charge was made. You can try again below, or wait for our email with other payment options.';
+        ban.style.cssText = 'max-width:1140px;margin:110px auto -70px;padding:14px 20px;border-radius:14px;font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.95rem;background:#FDF1E3;color:#8a6410';
+        ban.textContent = 'Payment cancelled — no charge was made. You can try again below, or wait for our email with other payment options.';
         var firstSec = document.querySelector('main, .on15-pick, section');
         if (firstSec && firstSec.parentNode) firstSec.parentNode.insertBefore(ban, firstSec);
       }
@@ -429,6 +425,44 @@
               payNote('Online payment isn’t available right now — submit the forms and we’ll email you payment options instead.');
             });
         });
+      }
+    }
+
+    // ---- camp confirmation page: render the paid weeks from the redirect params ----
+    var confList = document.getElementById('conf-weeks');
+    if (confList) {
+      var WEEK_INFO = {
+        'week-1': 'Week 1 · June 15 – 19 · $325', 'week-2': 'Week 2 · June 22 – 26 · $325',
+        'week-3': 'Week 3 · June 29 – July 3 (closed July 1) · $265', 'week-4': 'Week 4 · July 6 – 10 · $325',
+        'week-5': 'Week 5 · July 13 – 17 · $325', 'week-6': 'Week 6 · July 20 – 24 · $325',
+        'week-7': 'Week 7 · July 27 – 31 · $325', 'week-8': 'Week 8 · August 3 – 7 (closed Aug 3) · $265',
+        'week-9': 'Week 9 · August 10 – 14 · $325', 'week-10': 'Week 10 · August 17 – 21 · $325',
+        'week-11': 'Week 11 · August 24 – 28 · $325', 'week-12': 'Week 12 · Aug 31 – Sept 4 · $325'
+      };
+      var qp = new URLSearchParams(location.search);
+      var slugs = (qp.get('weeks') || '').split(',').filter(function (s) { return WEEK_INFO[s]; });
+      var child = (qp.get('child') || '').trim();
+      if (child) {
+        var ch = document.getElementById('conf-child');
+        if (ch) ch.textContent = 'Booking for ' + child;
+      }
+      if (slugs.length) {
+        confList.innerHTML = '';
+        var total = 0;
+        slugs.forEach(function (s) {
+          var li = document.createElement('li');
+          li.className = 'on19-week';
+          li.textContent = '✓ ' + WEEK_INFO[s];
+          confList.appendChild(li);
+          total += (s === 'week-3' || s === 'week-8') ? 265 : 325;
+        });
+        var tli = document.createElement('li');
+        tli.className = 'on19-week';
+        tli.style.fontWeight = '700';
+        tli.textContent = 'Total paid: $' + total.toLocaleString();
+        confList.appendChild(tli);
+      } else {
+        confList.innerHTML = '<li class="on19-week">Payment received — your weeks are in your Stripe receipt, and we’ll confirm them by email.</li>';
       }
     }
 
