@@ -459,7 +459,7 @@
         var tli = document.createElement('li');
         tli.className = 'on19-week';
         tli.style.fontWeight = '700';
-        tli.textContent = 'Total paid: $' + total.toLocaleString();
+        tli.textContent = 'Weeks total: $' + total.toLocaleString() + ' — your Stripe receipt shows the exact amount charged';
         confList.appendChild(tli);
       } else {
         confList.innerHTML = '<li class="on19-week">Payment received — your weeks are in your Stripe receipt, and we’ll confirm them by email.</li>';
