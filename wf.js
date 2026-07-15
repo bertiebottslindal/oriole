@@ -377,6 +377,59 @@
         });
       });
       syncWeeks();
+
+      // ---- camp online payment (Make checkout webhook -> Stripe Checkout) ----
+      var CHECKOUT_HOOK = 'https://hook.us2.make.com/i3h3pvb7c15mlgq89p7pcyqdhtlbjzl1';
+      if (/[?&](paid|cancelled)=1/.test(location.search)) {
+        var ok = /[?&]paid=1/.test(location.search);
+        var ban = document.createElement('div');
+        ban.style.cssText = 'max-width:1140px;margin:110px auto -70px;padding:14px 20px;border-radius:14px;font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.95rem;' +
+          (ok ? 'background:#EEF4E2;color:#46760A' : 'background:#FDF1E3;color:#8a6410');
+        ban.textContent = ok
+          ? 'Payment received — thank you! We’ll confirm your weeks by email once immunization records are in.'
+          : 'Payment cancelled — no charge was made. You can try again below, or wait for our email with other payment options.';
+        var firstSec = document.querySelector('main, .on15-pick, section');
+        if (firstSec && firstSec.parentNode) firstSec.parentNode.insertBefore(ban, firstSec);
+      }
+      var consentForm = document.querySelector('form[data-name="Camp Consent and Waiver"]');
+      var lastSec = consentForm ? consentForm.closest('section') : null;
+      if (lastSec) {
+        var pay = document.createElement('section');
+        pay.innerHTML = '<div class="on4-day-in"><div class="on-band"><h2 class="on-h2w">Ready to pay?</h2>' +
+          '<p class="on-band-p">Pay for your selected weeks online now by card — or submit the forms and we’ll email you PayPal, cheque and e-transfer options within one business day.</p>' +
+          '<div class="on-band-btns"><a href="#" class="on-btnl" id="camp-pay-btn">Pay online now</a></div>' +
+          '<p class="on-band-p" id="camp-pay-msg" style="display:none;margin-top:10px;font-weight:600"></p></div></div>';
+        lastSec.parentNode.insertBefore(pay, lastSec.nextSibling);
+        var payBtn = document.getElementById('camp-pay-btn');
+        var payMsg = document.getElementById('camp-pay-msg');
+        function payNote(t) { payMsg.textContent = t; payMsg.style.display = 'block'; }
+        payBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          var sel = [];
+          wks.forEach(function (w, i) { if (w.classList.contains('on15-wk-sel')) sel.push('week-' + (i + 1)); });
+          var val = function (n) { var el = document.querySelector('input[name="' + n + '"]'); return el ? el.value.trim() : ''; };
+          var email = val('Parent 1 Email');
+          var childName = (val('Child First Name') + ' ' + val('Child Last Name')).trim();
+          if (!sel.length) { payNote('Please tap the weeks you’d like in Step 1 first.'); return; }
+          if (!email || !childName) { payNote('Please fill in your child’s name and Parent 1 email in the family registration form first.'); return; }
+          payBtn.textContent = 'One moment…'; payBtn.style.pointerEvents = 'none';
+          var body = new URLSearchParams();
+          body.append('email', email);
+          body.append('childName', childName);
+          body.append('parentName', val('Parent 1 Name'));
+          body.append('weeks', sel.join(','));
+          fetch(CHECKOUT_HOOK, { method: 'POST', body: body })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+              if (j.url) { location.href = j.url; return; }
+              throw new Error('no url');
+            })
+            .catch(function () {
+              payBtn.textContent = 'Pay online now'; payBtn.style.pointerEvents = '';
+              payNote('Online payment isn’t available right now — submit the forms and we’ll email you payment options instead.');
+            });
+        });
+      }
     }
 
     // ---- map embed (iframes can't ship via the build API) ----
