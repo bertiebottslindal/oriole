@@ -1,5 +1,7 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
-   Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site. */
+   Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site.
+   v1.4.0 (2026-07-16, Heather batch 3): DOB date picker, Toddler schedule options, form session
+   persistence, camp medical gate + pre-pay week recap, /thank-you dynamic confirmations. */
 (function () {
   // ---- mobile hamburger ----
   document.addEventListener('click', function (e) {
@@ -65,7 +67,8 @@
     '.on-tnav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}' +
     '.on-tbtn{width:40px;height:40px;border-radius:100px;border:1px solid #E7E1D3;background:#fff;color:#46760A;font-size:1.1rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s ease;padding:0}' +
     '.on-tbtn:hover{background:#EEF4E2}' +
-    '.on15-wk-past{opacity:.45;pointer-events:none;cursor:default}';
+    '.on15-wk-past{opacity:.45;pointer-events:none;cursor:default}' +
+    'input[type=date].on-fi{height:auto;min-height:48px;line-height:1.4}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -82,8 +85,8 @@
     document.head.appendChild(a);
   })();
 
-  // ---- keep the hidden registration package out of search indexes ----
-  if (location.pathname === '/registration-form') {
+  // ---- keep the hidden registration package + thank-you pages out of search indexes ----
+  if (location.pathname === '/registration-form' || location.pathname === '/thank-you') {
     var nr = document.createElement('meta');
     nr.name = 'robots'; nr.content = 'noindex, nofollow';
     document.head.appendChild(nr);
@@ -133,6 +136,100 @@
         s.appendChild(el);
       });
     });
+
+    // ---- date of birth: native calendar picker (Heather batch 3) ----
+    document.querySelectorAll('.on-form input[name="Date of Birth"]').forEach(function (el) {
+      try { el.type = 'date'; } catch (e) { return; }
+      var t = new Date();
+      el.max = t.toISOString().slice(0, 10);
+      el.min = (t.getFullYear() - 7) + '-01-01';
+    });
+
+    // ---- session persistence: forms keep their values if a parent navigates away and back (Heather batch 3) ----
+    function loadState(k) { try { return JSON.parse(sessionStorage.getItem(k) || '{}'); } catch (e) { return {}; } }
+    function saveState(k, o) { try { sessionStorage.setItem(k, JSON.stringify(o)); } catch (e) { } }
+    var appForm = document.querySelector('form[data-name="Application 2026-2027"]');
+    var IS_CAMP = !!document.querySelector('form[data-name="Camp Family Registration"]');
+    var STORE_KEY = IS_CAMP ? 'on_camp_v1' : (appForm ? 'on_app_v1' : (document.querySelector('form[data-name="Registration Package"]') ? 'on_reg_v1' : null));
+    var store = STORE_KEY ? loadState(STORE_KEY) : {};
+    store.fields = store.fields || {};
+    store.done = store.done || {};
+    var updateCampUI = null;
+    function fkey(el, f) { return (f.getAttribute('data-name') || '') + '|' + el.name; }
+    if (STORE_KEY) {
+      document.querySelectorAll('.on-form form').forEach(function (f) {
+        f.querySelectorAll('input,select,textarea').forEach(function (el) {
+          if (!el.name || el.type === 'submit' || el.type === 'hidden') return;
+          var v = store.fields[fkey(el, f)];
+          if (v === undefined) return;
+          if (el.type === 'checkbox') el.checked = v === '1';
+          else el.value = v;
+        });
+        ['input', 'change'].forEach(function (ev) {
+          f.addEventListener(ev, function () {
+            f.querySelectorAll('input,select,textarea').forEach(function (el) {
+              if (!el.name || el.type === 'submit' || el.type === 'hidden') return;
+              store.fields[fkey(el, f)] = el.type === 'checkbox' ? (el.checked ? '1' : '') : el.value;
+            });
+            saveState(STORE_KEY, store);
+          });
+        });
+      });
+    }
+    if (location.pathname === '/camp-confirmation') {
+      try { sessionStorage.removeItem('on_camp_v1'); } catch (e) { }
+    }
+
+    // ---- application: Toddler schedules are 2 (Tue/Thu), 3 (M/W/F) or 5 mornings only (Heather batch 3) ----
+    var clsSel = appForm ? appForm.querySelector('select[name="Class"]') : null;
+    var schSel = appForm ? appForm.querySelector('select[name="Schedule"]') : null;
+    var SCHED_TODDLER = ['2 mornings (Tue & Thu)', '3 mornings (Mon/Wed/Fri)', '5 mornings'];
+    function rebuildSched() {
+      if (!clsSel || !schSel) return;
+      var list = clsSel.value.indexOf('Toddler') === 0 ? SCHED_TODDLER : selOpts['Schedule'];
+      var cur = (schSel.value || '').split(' (')[0];
+      schSel.innerHTML = '';
+      list.forEach(function (o) {
+        var el = document.createElement('option');
+        el.value = o; el.textContent = o;
+        schSel.appendChild(el);
+      });
+      var back = '';
+      list.forEach(function (o) { if (o.split(' (')[0] === cur) back = o; });
+      schSel.value = back || list[0];
+    }
+    if (clsSel && schSel) { clsSel.addEventListener('change', rebuildSched); rebuildSched(); }
+
+    // ---- per-form confirmation routing (Heather batch 3): where to send people after a successful submit ----
+    function afterSubmit(fname) {
+      var q = null;
+      if (/Lead Form$/.test(fname)) {
+        var topic = {
+          'Home Lead Form': 'general', 'Toddler Lead Form': 'toddler', 'Junior Lead Form': 'junior',
+          'Senior Lead Form': 'senior', 'Summer Camp Lead Form': 'camp'
+        }[fname] || 'general';
+        q = 'form=lead&topic=' + topic;
+      } else if (fname === 'Application 2026-2027') {
+        q = 'form=application&cls=' + encodeURIComponent(clsSel ? clsSel.value : '') +
+          '&sched=' + encodeURIComponent(schSel ? schSel.value : '');
+        try { sessionStorage.removeItem('on_app_v1'); } catch (e) { }
+      } else if (fname === 'Registration Package') {
+        var cc = document.querySelector('select[name="Child Class"]');
+        q = 'form=registration&cls=' + encodeURIComponent(cc ? cc.value : '');
+        try { sessionStorage.removeItem('on_reg_v1'); } catch (e) { }
+      } else if (fname === 'Camp Consent and Waiver') {
+        // last form before the pay band — stay on the page and guide them to payment
+        var pb = document.getElementById('camp-pay-btn');
+        if (pb) setTimeout(function () {
+          var sec = pb.closest('section');
+          if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+        }, 250);
+        return false;
+      }
+      if (!q) return false;
+      location.href = '/thank-you?' + q;
+      return true;
+    }
 
     // ---- email typo auto-correction on blur ----
     var domainFixes = [
@@ -206,6 +303,10 @@
         function finish(good) {
           if (btn) { btn.value = orig; btn.disabled = false; }
           if (good) {
+            var fname = f.getAttribute('data-name') || '';
+            if (STORE_KEY) { store.done[fname] = 1; saveState(STORE_KEY, store); }
+            if (updateCampUI) updateCampUI();
+            if (afterSubmit(fname)) return;
             f.style.display = 'none';
             var d = w.querySelector('.w-form-done');
             if (d) d.style.display = 'block';
@@ -369,12 +470,23 @@
         document.querySelectorAll('input[name="Selected Weeks"]').forEach(function (h) {
           h.value = sel.length ? sel.join('; ') + ' — total $' + total.toLocaleString() : 'none selected';
         });
+        if (STORE_KEY === 'on_camp_v1') {
+          var idx = [];
+          wks.forEach(function (w, n) { if (w.classList.contains('on15-wk-sel')) idx.push(n); });
+          store.weeks = idx;
+          saveState(STORE_KEY, store);
+        }
+        if (updateCampUI) updateCampUI();
       }
       wks.forEach(function (w) {
         w.addEventListener('click', function () {
           if (w.classList.contains('on15-wk-past')) return;
           w.classList.toggle('on15-wk-sel'); syncWeeks();
         });
+      });
+      // restore week selection from this tab's earlier visit (Heather batch 3)
+      (store.weeks || []).forEach(function (n) {
+        if (wks[n] && !wks[n].classList.contains('on15-wk-past')) wks[n].classList.add('on15-wk-sel');
       });
       syncWeeks();
 
@@ -414,22 +526,68 @@
       if (lastSec) {
         var pay = document.createElement('section');
         pay.innerHTML = '<div class="on4-day-in"><div class="on-band"><h2 class="on-h2w">Ready to pay?</h2>' +
-          '<p class="on-band-p">Pay for your selected weeks online now by card — or submit the forms and we’ll email you PayPal, cheque and e-transfer options within one business day.</p>' +
+          '<p class="on-band-p">Check your weeks below, then pay online by card — or submit the forms and we’ll email you PayPal, cheque and e-transfer options within one business day.</p>' +
+          '<ul id="camp-pay-weeks" role="list" style="list-style:none;margin:16px auto 6px;padding:0;max-width:540px;text-align:left;font-family:Inter,Arial,sans-serif;font-size:.95rem;color:#fff"></ul>' +
+          '<div id="camp-checklist" style="margin:6px auto 18px;max-width:540px;text-align:left;font-family:Inter,Arial,sans-serif;font-size:.88rem;color:#fff;opacity:.92"></div>' +
           '<div class="on-band-btns"><a href="#" class="on-btnl" id="camp-pay-btn">Pay online now</a></div>' +
+          '<p style="margin:14px 0 0;text-align:center"><a href="#" id="camp-finish-btn" style="color:#fff;text-decoration:underline;font-family:Inter,Arial,sans-serif;font-size:.9rem">I’ll pay another way — finish up</a></p>' +
           '<p class="on-band-p" id="camp-pay-msg" style="display:none;margin-top:10px;font-weight:600"></p></div></div>';
         lastSec.parentNode.insertBefore(pay, lastSec.nextSibling);
         var payBtn = document.getElementById('camp-pay-btn');
         var payMsg = document.getElementById('camp-pay-msg');
         function payNote(t) { payMsg.textContent = t; payMsg.style.display = 'block'; }
+        var val = function (n) {
+          var el = document.querySelector('input[name="' + n + '"], select[name="' + n + '"]');
+          return el ? (el.value || '').trim() : '';
+        };
+        // pre-pay recap + form checklist (Heather batch 3)
+        updateCampUI = function () {
+          var ul = document.getElementById('camp-pay-weeks');
+          var cl = document.getElementById('camp-checklist');
+          if (!ul || !cl) return;
+          var rows = [], total = 0;
+          wks.forEach(function (w) {
+            if (!w.classList.contains('on15-wk-sel')) return;
+            var lb = w.querySelector('.on9-thw').textContent + ' (' + w.querySelector('.on10-wkd').textContent + ')';
+            var pr = parseInt(w.querySelector('.on10-wkp').textContent.replace(/[^0-9]/g, ''), 10);
+            total += pr;
+            rows.push('<li style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,.22)">✓ ' + lb + ' — $' + pr + '</li>');
+          });
+          ul.innerHTML = rows.length
+            ? rows.join('') + '<li style="padding:6px 0;font-weight:700">Total: $' + total.toLocaleString() + ' — these exact weeks will show on the payment page</li>'
+            : '<li style="padding:4px 0">No weeks selected yet — tap your weeks in Step 1 above.</li>';
+          var newFam = val('New or Returning').indexOf('Returning') !== 0;
+          function row(done, label) { return '<div style="padding:2px 0">' + (done ? '✓' : '○') + ' ' + label + '</div>'; }
+          cl.innerHTML = row(store.done['Camp Family Registration'], 'Form 1 · Family registration') +
+            row(store.done['Camp Medical and Emergency'], 'Form 2 · Medical &amp; emergency' + (newFam ? ' — required for new families' : '')) +
+            row(store.done['Camp Consent and Waiver'], 'Form 3 · Consent &amp; waiver');
+        };
+        updateCampUI();
+        var finBtn = document.getElementById('camp-finish-btn');
+        finBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          var sel = [];
+          wks.forEach(function (w, i) { if (w.classList.contains('on15-wk-sel')) sel.push('week-' + (i + 1)); });
+          location.href = '/thank-you?form=camp&weeks=' + encodeURIComponent(sel.join(','));
+        });
         payBtn.addEventListener('click', function (e) {
           e.preventDefault();
           var sel = [];
           wks.forEach(function (w, i) { if (w.classList.contains('on15-wk-sel')) sel.push('week-' + (i + 1)); });
-          var val = function (n) { var el = document.querySelector('input[name="' + n + '"]'); return el ? el.value.trim() : ''; };
           var email = val('Parent 1 Email');
           var childName = (val('Child First Name') + ' ' + val('Child Last Name')).trim();
           if (!sel.length) { payNote('Please tap the weeks you’d like in Step 1 first.'); return; }
           if (!email || !childName) { payNote('Please fill in your child’s name and Parent 1 email in the family registration form first.'); return; }
+          // new families can’t pay until the medical form is in (Heather batch 3);
+          // the family + consent forms are required of everyone before online payment
+          var missing = [];
+          if (!store.done['Camp Family Registration']) missing.push('Form 1 (family registration)');
+          if (val('New or Returning').indexOf('Returning') !== 0 && !store.done['Camp Medical and Emergency']) missing.push('Form 2 (medical & emergency)');
+          if (!store.done['Camp Consent and Waiver']) missing.push('Form 3 (consent & waiver)');
+          if (missing.length) {
+            payNote('Almost there — please submit ' + missing.join(' and ') + ' above before paying.');
+            return;
+          }
           payBtn.textContent = 'One moment…'; payBtn.style.pointerEvents = 'none';
           var body = new URLSearchParams();
           body.append('email', email);
@@ -451,16 +609,16 @@
     }
 
     // ---- camp confirmation page: render the paid weeks from the redirect params ----
+    var WEEK_INFO = {
+      'week-1': 'Week 1 · June 15 – 19 · $325', 'week-2': 'Week 2 · June 22 – 26 · $325',
+      'week-3': 'Week 3 · June 29 – July 3 (closed July 1) · $265', 'week-4': 'Week 4 · July 6 – 10 · $325',
+      'week-5': 'Week 5 · July 13 – 17 · $325', 'week-6': 'Week 6 · July 20 – 24 · $325',
+      'week-7': 'Week 7 · July 27 – 31 · $325', 'week-8': 'Week 8 · August 3 – 7 (closed Aug 3) · $265',
+      'week-9': 'Week 9 · August 10 – 14 · $325', 'week-10': 'Week 10 · August 17 – 21 · $325',
+      'week-11': 'Week 11 · August 24 – 28 · $325', 'week-12': 'Week 12 · Aug 31 – Sept 4 · $325'
+    };
     var confList = document.getElementById('conf-weeks');
-    if (confList) {
-      var WEEK_INFO = {
-        'week-1': 'Week 1 · June 15 – 19 · $325', 'week-2': 'Week 2 · June 22 – 26 · $325',
-        'week-3': 'Week 3 · June 29 – July 3 (closed July 1) · $265', 'week-4': 'Week 4 · July 6 – 10 · $325',
-        'week-5': 'Week 5 · July 13 – 17 · $325', 'week-6': 'Week 6 · July 20 – 24 · $325',
-        'week-7': 'Week 7 · July 27 – 31 · $325', 'week-8': 'Week 8 · August 3 – 7 (closed Aug 3) · $265',
-        'week-9': 'Week 9 · August 10 – 14 · $325', 'week-10': 'Week 10 · August 17 – 21 · $325',
-        'week-11': 'Week 11 · August 24 – 28 · $325', 'week-12': 'Week 12 · Aug 31 – Sept 4 · $325'
-      };
+    if (confList && location.pathname !== '/thank-you') {
       var qp = new URLSearchParams(location.search);
       var slugs = (qp.get('weeks') || '').split(',').filter(function (s) { return WEEK_INFO[s]; });
       var child = (qp.get('child') || '').trim();
@@ -485,6 +643,116 @@
         confList.appendChild(tli);
       } else {
         confList.innerHTML = '<li class="on19-week">Payment received — your weeks are in your Stripe receipt, and we’ll confirm them by email.</li>';
+      }
+    }
+
+    // ---- /thank-you: dynamic confirmation page for every form (Heather batch 3) ----
+    if (location.pathname === '/thank-you' && confList) {
+      var tqp = new URLSearchParams(location.search);
+      var tEye = document.querySelector('.on19-hero .on-eyebrow');
+      if (tEye && (tqp.get('form') || '') !== 'camp') tEye.textContent = 'Oriole Nursery School';
+      var tHead = document.getElementById('conf-heading');
+      var tSub = document.getElementById('conf-sub');
+      var tCard = document.getElementById('conf-child');
+      var tCardBox = tCard ? tCard.parentNode : null;
+      var tNote = document.querySelector('.on19-note');
+      var tBtns = document.querySelectorAll('.on-band-btns a');
+      var HEATHER = '<a class="on19-link" href="mailto:heather@oriolenurseryschool.com">heather@oriolenurseryschool.com</a>';
+      var FEE_LINE = 'Full fee table, payment dates and policies: <a class="on19-link" href="/fee-schedule">Fee Schedule</a>. Questions? Email ' + HEATHER + '.';
+      function setList(items) {
+        confList.innerHTML = items.map(function (t) { return '<li class="on19-week">' + t + '</li>'; }).join('');
+      }
+      function setBtn(href, label) {
+        if (tBtns[0]) { tBtns[0].setAttribute('href', href); tBtns[0].textContent = label; }
+      }
+      var TLDR = {
+        toddler: {
+          card: 'Toddler Class at a glance',
+          items: ['Ages 18 months – 2.5 years · educator ratio 1:5',
+            'Schedules: 2 mornings (Tue &amp; Thu) · 3 mornings (Mon/Wed/Fri) · 5 mornings',
+            'Tuition: $562–$890 / month participating · $811–$1,135 non-participating'],
+          btn: ['/toddler', 'More about the Toddler Class']
+        },
+        junior: {
+          card: 'Junior Preschool at a glance',
+          items: ['Ages 2.6 – 3 · educator ratio 1:8',
+            'Schedules: 2, 3, 4 or 5 mornings · new Extended Day, 5 days 9:00–2:45 (ages 2.5+)',
+            'Tuition: $502–$795 / month participating · $727–$1,016 non-participating · Extended Day $1,380 / $1,601'],
+          btn: ['/junior', 'More about Junior Preschool']
+        },
+        senior: {
+          card: 'Senior Preschool at a glance',
+          items: ['Ages 3 – 5 · educator ratio 1:8',
+            'Schedules: 2, 3, 4 or 5 mornings · new Extended Day, 5 days 9:00–2:45',
+            'Tuition: $502–$795 / month participating · $727–$1,016 non-participating · Extended Day $1,380 / $1,601'],
+          btn: ['/senior', 'More about Senior Preschool']
+        },
+        camp: {
+          card: 'Summer Camp 2026 at a glance',
+          items: ['Ages 2 – 5', 'Twelve weekly sessions · June 15 – September 4',
+            '$325 per week · $265 for the two holiday-short weeks',
+            'Weeks can be booked individually — online registration is open'],
+          btn: ['/summer-registration', 'Go to camp registration']
+        }
+      };
+      var tForm = tqp.get('form') || '';
+      if (tForm === 'lead') {
+        var tp = TLDR[tqp.get('topic')];
+        if (tHead) tHead.textContent = 'Thanks — your message is on its way!';
+        if (tSub) tSub.textContent = 'We reply within one business day.';
+        if (tp) {
+          if (tCard) tCard.textContent = tp.card;
+          setList(tp.items);
+          if (tNote) tNote.innerHTML = FEE_LINE;
+          setBtn(tp.btn[0], tp.btn[1]);
+        } else {
+          if (tCardBox) tCardBox.style.display = 'none';
+          if (tNote) tNote.innerHTML = 'Questions in the meantime? Email ' + HEATHER + ' or call 416 960 1293.';
+          setBtn('/', 'Oriole home');
+        }
+      } else if (tForm === 'application') {
+        if (tHead) tHead.textContent = 'Application received — thank you!';
+        if (tSub) tSub.textContent = 'Our Registrar will be in touch within one business day about next steps.';
+        if (tCard) tCard.textContent = 'Your application';
+        var tItems = [];
+        if (tqp.get('cls')) tItems.push('Class: ' + tqp.get('cls'));
+        if (tqp.get('sched')) tItems.push('Schedule: ' + tqp.get('sched'));
+        tItems.push('A $150 non-refundable application fee is due at submission — the Registrar will confirm payment details');
+        tItems.push('After acceptance: an $850 deposit is due four weeks after your acceptance letter');
+        setList(tItems);
+        if (tNote) tNote.innerHTML = FEE_LINE;
+        setBtn('/fee-schedule', 'See the Fee Schedule');
+      } else if (tForm === 'camp') {
+        if (tHead) tHead.textContent = 'Registration forms received — thank you!';
+        if (tSub) tSub.textContent = 'We’ll email PayPal, cheque and e-transfer payment options within one business day.';
+        if (tCard) tCard.textContent = 'Your selected weeks';
+        var tSlugs = (tqp.get('weeks') || '').split(',').filter(function (s) { return WEEK_INFO[s]; });
+        if (tSlugs.length) {
+          var tTot = 0;
+          setList(tSlugs.map(function (s) {
+            tTot += (s === 'week-3' || s === 'week-8') ? 265 : 325;
+            return '✓ ' + WEEK_INFO[s];
+          }).concat(['Weeks total: $' + tTot.toLocaleString()]));
+        } else {
+          setList(['We’ve received your forms — reply to our email with the weeks you’d like if you haven’t picked them yet.']);
+        }
+        if (tNote) tNote.innerHTML = '<b>One thing left:</b> your child’s space is confirmed once we’ve received their immunization records — email a copy to ' + HEATHER + ', or mail them to the school.';
+        setBtn('/summer-camp', 'Back to Summer Camp');
+      } else if (tForm === 'registration') {
+        if (tHead) tHead.textContent = 'Registration package received — welcome!';
+        if (tSub) tSub.textContent = 'Our Registrar will confirm your child’s details and be in touch.';
+        if (tCard) tCard.textContent = 'What happens next';
+        var rItems = [];
+        if (tqp.get('cls')) rItems.push('Class: ' + tqp.get('cls'));
+        rItems.push('Email your child’s immunization records to heather@oriolenurseryschool.com');
+        rItems.push('We’ll follow up if anything needs clarifying');
+        setList(rItems);
+        if (tNote) tNote.innerHTML = 'Questions? Email ' + HEATHER + ' or call 416 960 1293.';
+        setBtn('/', 'Oriole home');
+      } else {
+        if (tCardBox) tCardBox.style.display = 'none';
+        if (tNote) tNote.innerHTML = 'Questions? Email ' + HEATHER + ' or call 416 960 1293.';
+        setBtn('/', 'Oriole home');
       }
     }
 
