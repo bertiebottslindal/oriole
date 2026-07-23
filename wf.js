@@ -1,7 +1,7 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site.
-   v1.4.0 (2026-07-16, Heather batch 3): DOB date picker, Toddler schedule options, form session
-   persistence, camp medical gate + pre-pay week recap, /thank-you dynamic confirmations. */
+   v1.4.1 (2026-07-23, Heather batch 4): no "within one business day" anywhere (Heather is in the
+   classroom — no reply-time promises); morning program hours 9:00–12:00 added to confirmation cards. */
 (function () {
   // ---- mobile hamburger ----
   document.addEventListener('click', function (e) {
@@ -363,7 +363,7 @@
     document.querySelectorAll('.on-form').forEach(function (w) {
       var n = document.createElement('div');
       n.className = 'on-replynote';
-      n.textContent = 'We reply within one business day.';
+      n.textContent = 'We’ll get back to you as soon as we can.';
       w.appendChild(n);
     });
 
@@ -526,7 +526,7 @@
       if (lastSec) {
         var pay = document.createElement('section');
         pay.innerHTML = '<div class="on4-day-in"><div class="on-band"><h2 class="on-h2w">Ready to pay?</h2>' +
-          '<p class="on-band-p">Check your weeks below, then pay online by card — or submit the forms and we’ll email you PayPal, cheque and e-transfer options within one business day.</p>' +
+          '<p class="on-band-p">Check your weeks below, then pay online by card — or submit the forms and we’ll email you PayPal, cheque and e-transfer options.</p>' +
           '<ul id="camp-pay-weeks" role="list" style="list-style:none;margin:16px auto 6px;padding:0;max-width:540px;text-align:left;font-family:Inter,Arial,sans-serif;font-size:.95rem;color:#fff"></ul>' +
           '<div id="camp-checklist" style="margin:6px auto 18px;max-width:540px;text-align:left;font-family:Inter,Arial,sans-serif;font-size:.88rem;color:#fff;opacity:.92"></div>' +
           '<div class="on-band-btns"><a href="#" class="on-btnl" id="camp-pay-btn">Pay online now</a></div>' +
@@ -669,21 +669,21 @@
         toddler: {
           card: 'Toddler Class at a glance',
           items: ['Ages 18 months – 2.5 years · educator ratio 1:5',
-            'Schedules: 2 mornings (Tue &amp; Thu) · 3 mornings (Mon/Wed/Fri) · 5 mornings',
+            'Schedules: 2 mornings (Tue &amp; Thu) · 3 mornings (Mon/Wed/Fri) · 5 mornings — all 9 am–12 pm',
             'Tuition: $562–$890 / month participating · $811–$1,135 non-participating'],
           btn: ['/toddler', 'More about the Toddler Class']
         },
         junior: {
           card: 'Junior Preschool at a glance',
           items: ['Ages 2.6 – 3 · educator ratio 1:8',
-            'Schedules: 2, 3, 4 or 5 mornings · new Extended Day, 5 days 9:00–2:45 (ages 2.5+)',
+            'Schedules: 2, 3, 4 or 5 mornings (9 am–12 pm) · new Extended Day, 5 days 9:00–2:45 (ages 2.5+)',
             'Tuition: $502–$795 / month participating · $727–$1,016 non-participating · Extended Day $1,380 / $1,601'],
           btn: ['/junior', 'More about Junior Preschool']
         },
         senior: {
           card: 'Senior Preschool at a glance',
           items: ['Ages 3 – 5 · educator ratio 1:8',
-            'Schedules: 2, 3, 4 or 5 mornings · new Extended Day, 5 days 9:00–2:45',
+            'Schedules: 2, 3, 4 or 5 mornings (9 am–12 pm) · new Extended Day, 5 days 9:00–2:45',
             'Tuition: $502–$795 / month participating · $727–$1,016 non-participating · Extended Day $1,380 / $1,601'],
           btn: ['/senior', 'More about Senior Preschool']
         },
@@ -699,7 +699,7 @@
       if (tForm === 'lead') {
         var tp = TLDR[tqp.get('topic')];
         if (tHead) tHead.textContent = 'Thanks — your message is on its way!';
-        if (tSub) tSub.textContent = 'We reply within one business day.';
+        if (tSub) tSub.textContent = 'We’ll get back to you as soon as we can.';
         if (tp) {
           if (tCard) tCard.textContent = tp.card;
           setList(tp.items);
@@ -712,7 +712,7 @@
         }
       } else if (tForm === 'application') {
         if (tHead) tHead.textContent = 'Application received — thank you!';
-        if (tSub) tSub.textContent = 'Our Registrar will be in touch within one business day about next steps.';
+        if (tSub) tSub.textContent = 'Our Registrar will be in touch about next steps.';
         if (tCard) tCard.textContent = 'Your application';
         var tItems = [];
         if (tqp.get('cls')) tItems.push('Class: ' + tqp.get('cls'));
@@ -724,7 +724,7 @@
         setBtn('/fee-schedule', 'See the Fee Schedule');
       } else if (tForm === 'camp') {
         if (tHead) tHead.textContent = 'Registration forms received — thank you!';
-        if (tSub) tSub.textContent = 'We’ll email PayPal, cheque and e-transfer payment options within one business day.';
+        if (tSub) tSub.textContent = 'We’ll email PayPal, cheque and e-transfer payment options.';
         if (tCard) tCard.textContent = 'Your selected weeks';
         var tSlugs = (tqp.get('weeks') || '').split(',').filter(function (s) { return WEEK_INFO[s]; });
         if (tSlugs.length) {
