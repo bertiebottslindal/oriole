@@ -1,7 +1,8 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site.
-   v1.4.1 (2026-07-23, Heather batch 4): no "within one business day" anywhere (Heather is in the
-   classroom — no reply-time promises); morning program hours 9:00–12:00 added to confirmation cards. */
+   v1.5.0 (2026-07-24, Heather batch 4b): Monthly/Annual toggle on class-page fee tables (annual =
+   monthly x 10-month school year; extended-day pricing confirmed at the $585/mo add-on). Prior:
+   1.4.1 removed "within one business day" sitewide + added 9am-12pm morning hours to confirmations. */
 (function () {
   // ---- mobile hamburger ----
   document.addEventListener('click', function (e) {
@@ -366,6 +367,62 @@
       n.textContent = 'We’ll get back to you as soon as we can.';
       w.appendChild(n);
     });
+
+    // ---- fees tables: Monthly/Annual toggle on class pages (Heather batch 4b) ----
+    (function () {
+      var all = [];
+      document.querySelectorAll('*').forEach(function (el) {
+        if (/^\$[\d,]+\s*\/\s*mo$/.test((el.textContent || '').trim())) all.push(el);
+      });
+      // keep only innermost matches
+      var moCells = all.filter(function (el) {
+        return !all.some(function (o) { return o !== el && el.contains(o); });
+      });
+      if (!moCells.length) return;
+      moCells.forEach(function (el) {
+        var n = parseInt(el.textContent.replace(/[^0-9]/g, ''), 10);
+        el.setAttribute('data-mo', '$' + n.toLocaleString('en-CA') + ' / mo');
+        el.setAttribute('data-yr', '$' + (n * 10).toLocaleString('en-CA') + ' / yr');
+      });
+      var intro = null;
+      document.querySelectorAll('p, div').forEach(function (el) {
+        if (!intro && el.children.length === 0 && /^Monthly tuition, billed/.test((el.textContent || '').trim())) intro = el;
+      });
+      if (intro) intro.setAttribute('data-orig', intro.textContent);
+      var anchor = moCells[0].closest('table');
+      if (!anchor) {
+        anchor = moCells[0];
+        while (anchor.parentNode && !anchor.parentNode.contains(moCells[moCells.length - 1])) anchor = anchor.parentNode;
+        while (anchor.parentNode && anchor !== document.body && !(anchor.contains(moCells[0]) && anchor.contains(moCells[moCells.length - 1]))) anchor = anchor.parentNode;
+      }
+      var bar = document.createElement('div');
+      bar.style.cssText = 'display:flex;gap:6px;margin:0 0 14px;font-family:Inter,Arial,sans-serif';
+      function mkBtn(label) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        b.style.cssText = 'padding:7px 16px;border-radius:999px;border:1.5px solid #5B990A;background:#fff;color:#3D3D3D;font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s';
+        return b;
+      }
+      var bMo = mkBtn('Monthly'), bYr = mkBtn('Annual');
+      function setMode(yr) {
+        moCells.forEach(function (el) { el.textContent = el.getAttribute(yr ? 'data-yr' : 'data-mo'); });
+        if (intro) {
+          var orig = intro.getAttribute('data-orig');
+          intro.textContent = yr ? orig.replace(/^Monthly tuition, billed over our/, 'Annual tuition for our') : orig;
+        }
+        [bMo, bYr].forEach(function (b, i) {
+          var on = (i === 1) === yr;
+          b.style.background = on ? '#5B990A' : '#fff';
+          b.style.color = on ? '#fff' : '#3D3D3D';
+        });
+      }
+      bMo.addEventListener('click', function () { setMode(false); });
+      bYr.addEventListener('click', function () { setMode(true); });
+      bar.appendChild(bMo); bar.appendChild(bYr);
+      anchor.parentNode.insertBefore(bar, anchor);
+      setMode(false);
+    })();
 
     // ---- CRO: soften Handbook form (home): last name + phone optional ----
     if (location.pathname === '/' || location.pathname === '') {
