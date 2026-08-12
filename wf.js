@@ -1,7 +1,8 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site.
-   v1.5.0 (2026-07-24, Heather batch 4b): Monthly/Annual toggle on class-page fee tables (annual =
-   monthly x 10-month school year; extended-day pricing confirmed at the $585/mo add-on). Prior:
+   v1.5.1 (2026-08-12, go-live prep): /camp-confirmation added to the noindex list (was only
+   /registration-form + /thank-you). Prior: 1.5.0 Monthly/Annual toggle on class-page fee tables
+   (annual = monthly x 10-month school year; extended-day pricing confirmed at $585/mo add-on);
    1.4.1 removed "within one business day" sitewide + added 9am-12pm morning hours to confirmations. */
 (function () {
   // ---- mobile hamburger ----
@@ -87,7 +88,7 @@
   })();
 
   // ---- keep the hidden registration package + thank-you pages out of search indexes ----
-  if (location.pathname === '/registration-form' || location.pathname === '/thank-you') {
+  if (location.pathname === '/registration-form' || location.pathname === '/thank-you' || location.pathname === '/camp-confirmation') {
     var nr = document.createElement('meta');
     nr.name = 'robots'; nr.content = 'noindex, nofollow';
     document.head.appendChild(nr);
