@@ -1,10 +1,12 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site.
-   v1.5.1 (2026-08-12, go-live prep): /camp-confirmation added to the noindex list (was only
-   /registration-form + /thank-you). Prior: 1.5.0 Monthly/Annual toggle on class-page fee tables
-   (annual = monthly x 10-month school year; extended-day pricing confirmed at $585/mo add-on);
-   1.4.1 removed "within one business day" sitewide + added 9am-12pm morning hours to confirmations. */
+   v1.6.0 (2026-08-19, spam defence): invisible honeypot field ("Website", data-hp) injected into
+   every form + 3s minimum fill-time; tripping either fakes a normal success without posting, so
+   bots see nothing. Honeypot is excluded from the real POST (payloads unchanged downstream).
+   Prior: 1.5.1 /camp-confirmation noindex; 1.5.0 Monthly/Annual fee toggle;
+   1.4.1 removed "within one business day" sitewide + morning hours on confirmations. */
 (function () {
+  var T0 = Date.now();
   // ---- mobile hamburger ----
   document.addEventListener('click', function (e) {
     var hb = e.target.closest('.on-hb');
@@ -269,6 +271,22 @@
     document.querySelectorAll('.on-form form, form.on-form').forEach(function (f) {
       f.setAttribute('novalidate', 'novalidate');
     });
+
+    // ---- spam defence: off-screen honeypot in every form (bots auto-fill it; humans never see it) ----
+    document.querySelectorAll('.on-form form, form.on-form').forEach(function (f) {
+      if (f.querySelector('input[data-hp]')) return;
+      var wr = document.createElement('div');
+      wr.setAttribute('aria-hidden', 'true');
+      wr.style.cssText = 'position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden';
+      var hp = document.createElement('input');
+      hp.type = 'text';
+      hp.name = 'Website';
+      hp.setAttribute('data-hp', '1');
+      hp.autocomplete = 'off';
+      hp.tabIndex = -1;
+      wr.appendChild(hp);
+      f.appendChild(wr);
+    });
     document.addEventListener('submit', function (e) {
       var f = e.target.closest ? e.target : null;
       if (!f || !(f.closest('.on-form'))) return;
@@ -298,7 +316,7 @@
         fd.append('source', location.href);
         fd.append('test', 'false');
         f.querySelectorAll('input,select,textarea').forEach(function (el) {
-          if (el.type === 'submit' || !el.name) return;
+          if (el.type === 'submit' || !el.name || el.hasAttribute('data-hp')) return;
           fd.append('fields[' + el.name + ']', el.value);
         });
         var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
@@ -322,6 +340,13 @@
         }
         function post() {
           return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+        }
+        // Spam gate: filled honeypot or a submit within 3s of page load = bot.
+        // Fake the normal success (no POST) so the bot can't learn it was caught.
+        var hpEl = f.querySelector('input[data-hp]');
+        if ((hpEl && (hpEl.value || '').trim() !== '') || (Date.now() - T0 < 3000)) {
+          setTimeout(function () { finish(true); }, 600);
+          return;
         }
         post().then(function (r) {
           if (r.ok) return finish(true);
