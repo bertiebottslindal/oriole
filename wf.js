@@ -1,5 +1,6 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
-   Loaded as a Webflow registered hosted script. Do not delete — load-bearing for the Webflow site.
+   Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
+   2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
    v1.6.0 (2026-08-19, spam defence): invisible honeypot field ("Website", data-hp) injected into
    every form + 3s minimum fill-time; tripping either fakes a normal success without posting, so
    bots see nothing. Honeypot is excluded from the real POST (payloads unchanged downstream).
