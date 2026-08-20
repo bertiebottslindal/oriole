@@ -1,6 +1,10 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.8.1 (2026-08-20): the application form's Schedule dropdown is rebuilt by rebuildSched()
+   when the Class changes, and that second code path did not carry the blank-placeholder rule -
+   so Schedule sat on the literal string "Select a schedule" and would have posted it as the
+   answer. Caught on the live page right after 1.8.0 shipped.
    v1.8.0 (2026-08-20, Roberta - form audit fixes):
    (f) insertAboveSubmit() helper - the submit button is nested inside a wrapper on the
        registration form, so form.insertBefore() threw and took the submit handler with it.
@@ -348,12 +352,15 @@
       schSel.innerHTML = '';
       list.forEach(function (o) {
         var el = document.createElement('option');
-        el.value = o; el.textContent = o;
+        // same placeholder rule as the generic injector: 'Select ...' carries a blank value,
+        // so the required check cannot be satisfied by leaving the dropdown alone (v1.8.1)
+        el.value = (o.indexOf('Select ') === 0) ? '' : o;
+        el.textContent = o;
         schSel.appendChild(el);
       });
       var back = '';
-      list.forEach(function (o) { if (o.split(' (')[0] === cur) back = o; });
-      schSel.value = back || list[0];
+      list.forEach(function (o) { if (o.indexOf('Select ') !== 0 && o.split(' (')[0] === cur) back = o; });
+      schSel.value = back || '';
     }
     if (clsSel && schSel) { clsSel.addEventListener('change', rebuildSched); rebuildSched(); }
 
