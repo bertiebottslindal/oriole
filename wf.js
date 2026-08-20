@@ -1,10 +1,12 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
-   v1.6.0 (2026-08-19, spam defence): invisible honeypot field ("Website", data-hp) injected into
-   every form + 3s minimum fill-time; tripping either fakes a normal success without posting, so
-   bots see nothing. Honeypot is excluded from the real POST (payloads unchanged downstream).
-   Prior: 1.5.1 /camp-confirmation noindex; 1.5.0 Monthly/Annual fee toggle;
+   v1.7.0 (2026-08-20, Roberta batch): (a) homepage "Our Programs" paragraph gains the enriched-
+   programming sentence; (b) rotating "Enriched programming includes" strip injected directly under
+   the homepage hero; (c) REQUIRED CWELCC acknowledgement checkbox on all five lead forms
+   (Home/Toddler/Junior/Senior/Summer Camp) - posts as fields[CWELCC Acknowledgement]=Yes.
+   Prior: 1.6.0 honeypot + 3s min fill-time spam defence on every form (excluded from the real POST);
+   1.5.1 /camp-confirmation noindex; 1.5.0 Monthly/Annual fee toggle;
    1.4.1 removed "within one business day" sitewide + morning hours on confirmations. */
 (function () {
   var T0 = Date.now();
@@ -73,7 +75,22 @@
     '.on-tbtn{width:40px;height:40px;border-radius:100px;border:1px solid #E7E1D3;background:#fff;color:#46760A;font-size:1.1rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s ease;padding:0}' +
     '.on-tbtn:hover{background:#EEF4E2}' +
     '.on15-wk-past{opacity:.45;pointer-events:none;cursor:default}' +
-    'input[type=date].on-fi{height:auto;min-height:48px;line-height:1.4}';
+    'input[type=date].on-fi{height:auto;min-height:48px;line-height:1.4}' +
+    // hero rotator strip (homepage): inline-grid stacks every word in one cell, so the
+    // strip is sized by the longest word and nothing shifts as it cycles
+    '.on-rot{background:#FAF6EE;border-bottom:1px solid #E7E1D3;padding:13px 28px}' +
+    '.on-rot-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px}' +
+    '.on-rot-l{font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:#46760A}' +
+    '.on-rot-w{display:inline-grid;justify-items:center;font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.3rem;color:#26271F;line-height:1.2}' +
+    '.on-rot-i{grid-area:1/1;white-space:nowrap;opacity:0;transform:translateY(7px);transition:opacity .4s ease,transform .4s ease}' +
+    '.on-rot-i.on-rot-on{opacity:1;transform:none}' +
+    '@media (max-width:600px){.on-rot{padding:11px 20px}.on-rot-in{flex-direction:column;gap:4px}.on-rot-l{font-size:.66rem;letter-spacing:.13em}.on-rot-w{font-size:1.15rem}}' +
+    '@media (prefers-reduced-motion:reduce){.on-rot-i{transition:none;transform:none}}' +
+    // CWELCC acknowledgement checkbox on lead forms
+    '.on-ck{grid-column:1/-1;width:100%;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;margin:2px 0 2px}' +
+    '.on-ck input{width:18px;height:18px;min-width:18px;margin:2px 0 0;accent-color:#5B990A;cursor:pointer;flex:0 0 auto}' +
+    '.on-ck label{flex:1 1 0;min-width:0;font-family:Inter,Arial,sans-serif;font-size:.85rem;font-weight:500;line-height:1.45;color:#5E6157;cursor:pointer}' +
+    '.on-ck .on-ferr{flex-basis:100%;margin-left:28px}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -96,6 +113,53 @@
     nr.name = 'robots'; nr.content = 'noindex, nofollow';
     document.head.appendChild(nr);
   }
+
+  // ---- homepage: Our Programs copy + enrichment rotator under the hero (Roberta, 2026-08-20) ----
+  // Runs immediately (this script is the last element in <body>, so the nodes already exist and
+  // the copy swap lands before first paint) rather than waiting for DOMContentLoaded.
+  (function () {
+    var progs = document.querySelector('.on-progs');
+    if (progs) {
+      var p = progs.querySelector('p.on-mut');
+      if (p && /^Every class has its own daily rhythm/.test((p.textContent || '').trim())) {
+        p.textContent = 'Every class has its own daily rhythm, weekly activities, and educators \u2014 '
+          + 'explore the one that fits your child. Enriched programming includes weekly French and '
+          + 'specialist-led classes including Sportball, music, science, gardening and yoga. '
+          + 'Limited spaces available for 2026/27.';
+      }
+    }
+
+    var hero = document.querySelector('.on-hero');
+    if (!hero || document.querySelector('.on-rot')) return;
+    var path = location.pathname.replace(/\/$/, '');
+    if (path !== '') return; // homepage only
+    var words = ['Sportball', 'Music', 'Science', 'Gardening', 'Yoga', 'Art', 'Family Events', 'Seasonal Celebrations'];
+    var strip = document.createElement('div');
+    strip.className = 'on-rot';
+    var inner = document.createElement('div');
+    inner.className = 'on-rot-in';
+    var lab = document.createElement('div');
+    lab.className = 'on-rot-l';
+    lab.textContent = 'Enriched programming includes';
+    var wrap = document.createElement('div');
+    wrap.className = 'on-rot-w';
+    var items = words.map(function (w, i) {
+      var sp = document.createElement('span');
+      sp.className = 'on-rot-i' + (i === 0 ? ' on-rot-on' : '');
+      sp.textContent = w;
+      wrap.appendChild(sp);
+      return sp;
+    });
+    inner.appendChild(lab); inner.appendChild(wrap); strip.appendChild(inner);
+    hero.parentNode.insertBefore(strip, hero.nextSibling);
+    var idx = 0;
+    setInterval(function () {
+      if (document.hidden) return;
+      items[idx].classList.remove('on-rot-on');
+      idx = (idx + 1) % items.length;
+      items[idx].classList.add('on-rot-on');
+    }, 2200);
+  })();
 
   ready(function () {
     // ---- real placeholders (Webflow forces "Example text") ----
@@ -288,6 +352,29 @@
       wr.appendChild(hp);
       f.appendChild(wr);
     });
+    // ---- required CWELCC acknowledgement on every lead form (Roberta, 2026-08-20) ----
+    // Ad traffic will be sent at these forms, so the acknowledgement gates the lead rather
+    // than sitting in fine print: unchecked = the submit is blocked and nothing is posted.
+    document.querySelectorAll('.on-form form').forEach(function (f) {
+      if (!/Lead Form$/.test(f.getAttribute('data-name') || '')) return;
+      if (f.querySelector('input[name="CWELCC Acknowledgement"]')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'on-ck';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.name = 'CWELCC Acknowledgement';
+      cb.id = 'on-ck-cwelcc';
+      cb.required = true;
+      var lab = document.createElement('label');
+      lab.setAttribute('for', 'on-ck-cwelcc');
+      lab.textContent = 'I understand that Oriole Nursery School is not part of the CWELCC program.';
+      cb.addEventListener('change', function () { if (cb.checked) clearErr(cb); });
+      wrap.appendChild(cb);
+      wrap.appendChild(lab);
+      var submit = f.querySelector('input[type="submit"]');
+      if (submit) f.insertBefore(wrap, submit); else f.appendChild(wrap);
+    });
+
     document.addEventListener('submit', function (e) {
       var f = e.target.closest ? e.target : null;
       if (!f || !(f.closest('.on-form'))) return;
@@ -296,6 +383,11 @@
         f.querySelectorAll('input,select').forEach(function (el) {
           if (el.type === 'submit') return;
           clearErr(el);
+          if (el.type === 'checkbox') {
+            // .value is always 'on', so required checkboxes need an explicit checked test
+            if (el.required && !el.checked) { err(el, 'Please confirm this to continue'); ok = false; }
+            return;
+          }
           var v = (el.value || '').trim();
           if (el.required && !v) { err(el, 'This field is required'); ok = false; return; }
           if (el.type === 'email' && v && !emailRe.test(v)) { err(el, 'Please enter a valid email address'); ok = false; }
@@ -318,6 +410,7 @@
         fd.append('test', 'false');
         f.querySelectorAll('input,select,textarea').forEach(function (el) {
           if (el.type === 'submit' || !el.name || el.hasAttribute('data-hp')) return;
+          if (el.type === 'checkbox') { fd.append('fields[' + el.name + ']', el.checked ? 'Yes' : 'No'); return; }
           fd.append('fields[' + el.name + ']', el.value);
         });
         var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
