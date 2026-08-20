@@ -1,9 +1,12 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.7.1 (2026-08-20): enrichment strip reworked per Roberta - label pinned LEFT, words scroll
+   horizontally in a seamless infinite marquee (was a centred crossfade), and the strip moved from
+   under the hero to under the green numbers bar (.on-trust). Colours unchanged.
    v1.7.0 (2026-08-20, Roberta batch): (a) homepage "Our Programs" paragraph gains the enriched-
-   programming sentence; (b) rotating "Enriched programming includes" strip injected directly under
-   the homepage hero; (c) REQUIRED CWELCC acknowledgement checkbox on all five lead forms
+   programming sentence; (b) enrichment strip injected on the homepage; (c) REQUIRED CWELCC
+   acknowledgement checkbox on all five lead forms
    (Home/Toddler/Junior/Senior/Summer Camp) - posts as fields[CWELCC Acknowledgement]=Yes.
    Prior: 1.6.0 honeypot + 3s min fill-time spam defence on every form (excluded from the real POST);
    1.5.1 /camp-confirmation noindex; 1.5.0 Monthly/Annual fee toggle;
@@ -78,14 +81,15 @@
     'input[type=date].on-fi{height:auto;min-height:48px;line-height:1.4}' +
     // hero rotator strip (homepage): inline-grid stacks every word in one cell, so the
     // strip is sized by the longest word and nothing shifts as it cycles
-    '.on-rot{background:#FAF6EE;border-bottom:1px solid #E7E1D3;padding:13px 28px}' +
-    '.on-rot-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px}' +
-    '.on-rot-l{font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:#46760A}' +
-    '.on-rot-w{display:inline-grid;justify-items:center;font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.3rem;color:#26271F;line-height:1.2}' +
-    '.on-rot-i{grid-area:1/1;white-space:nowrap;opacity:0;transform:translateY(7px);transition:opacity .4s ease,transform .4s ease}' +
-    '.on-rot-i.on-rot-on{opacity:1;transform:none}' +
-    '@media (max-width:600px){.on-rot{padding:11px 20px}.on-rot-in{flex-direction:column;gap:4px}.on-rot-l{font-size:.66rem;letter-spacing:.13em}.on-rot-w{font-size:1.15rem}}' +
-    '@media (prefers-reduced-motion:reduce){.on-rot-i{transition:none;transform:none}}' +
+    '.on-rot{background:#FAF6EE;border-bottom:1px solid #E7E1D3;overflow:hidden}' +
+    '.on-rot-in{max-width:1180px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:22px}' +
+    '.on-rot-l{flex:0 0 auto;padding:14px 0;font-family:Inter,Arial,sans-serif;font-weight:600;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:#46760A}' +
+    // marquee viewport: fades both edges so words slide in and out instead of hard-cutting
+    '.on-rot-m{flex:1 1 auto;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 26px,#000 calc(100% - 42px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 26px,#000 calc(100% - 42px),transparent 100%)}' +
+    '.on-rot-t{display:flex;align-items:center;width:max-content;will-change:transform}' +
+    '.on-rot-i{padding:14px 0;white-space:nowrap;font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.25rem;line-height:1.2;color:#26271F}' +
+    '.on-rot-s{padding:0 18px;color:#5B990A;font-size:.9rem;line-height:1}' +
+    '@media (max-width:600px){.on-rot-in{flex-direction:column;align-items:stretch;gap:0;padding:0 20px}.on-rot-l{padding:11px 0 0;font-size:.66rem;letter-spacing:.13em}.on-rot-i{padding:8px 0 11px;font-size:1.12rem}.on-rot-m{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 42px),transparent 100%);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 42px),transparent 100%)}}' +
     // CWELCC acknowledgement checkbox on lead forms
     '.on-ck{grid-column:1/-1;width:100%;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;margin:2px 0 2px}' +
     '.on-ck input{width:18px;height:18px;min-width:18px;margin:2px 0 0;accent-color:#5B990A;cursor:pointer;flex:0 0 auto}' +
@@ -129,11 +133,14 @@
       }
     }
 
-    var hero = document.querySelector('.on-hero');
-    if (!hero || document.querySelector('.on-rot')) return;
-    var path = location.pathname.replace(/\/$/, '');
-    if (path !== '') return; // homepage only
+    // Label sits static on the left; the words scroll horizontally in a seamless loop.
+    // Sits under the green numbers bar (.on-trust), homepage only.
+    var bar = document.querySelector('.on-trust');
+    if (!bar || document.querySelector('.on-rot')) return;
+    if (location.pathname.replace(/\/$/, '') !== '') return; // homepage only
     var words = ['Sportball', 'Music', 'Science', 'Gardening', 'Yoga', 'Art', 'Family Events', 'Seasonal Celebrations'];
+    var SPEED = 55; // px per second
+
     var strip = document.createElement('div');
     strip.className = 'on-rot';
     var inner = document.createElement('div');
@@ -141,24 +148,57 @@
     var lab = document.createElement('div');
     lab.className = 'on-rot-l';
     lab.textContent = 'Enriched programming includes';
-    var wrap = document.createElement('div');
-    wrap.className = 'on-rot-w';
-    var items = words.map(function (w, i) {
-      var sp = document.createElement('span');
-      sp.className = 'on-rot-i' + (i === 0 ? ' on-rot-on' : '');
-      sp.textContent = w;
-      wrap.appendChild(sp);
-      return sp;
-    });
-    inner.appendChild(lab); inner.appendChild(wrap); strip.appendChild(inner);
-    hero.parentNode.insertBefore(strip, hero.nextSibling);
-    var idx = 0;
-    setInterval(function () {
-      if (document.hidden) return;
-      items[idx].classList.remove('on-rot-on');
-      idx = (idx + 1) % items.length;
-      items[idx].classList.add('on-rot-on');
-    }, 2200);
+    var view = document.createElement('div');
+    view.className = 'on-rot-m';
+    var track = document.createElement('div');
+    track.className = 'on-rot-t';
+    view.appendChild(track);
+    inner.appendChild(lab); inner.appendChild(view); strip.appendChild(inner);
+    bar.parentNode.insertBefore(strip, bar.nextSibling);
+
+    // one group = the full word list, each word followed by a separator, so groups
+    // butt together seamlessly however many times they repeat
+    function buildGroup() {
+      var g = document.createDocumentFragment();
+      words.forEach(function (w) {
+        var sp = document.createElement('span');
+        sp.className = 'on-rot-i';
+        sp.textContent = w;
+        var sep = document.createElement('span');
+        sep.className = 'on-rot-s';
+        sep.textContent = '\u25CF';
+        g.appendChild(sp); g.appendChild(sep);
+      });
+      return g;
+    }
+
+    var anim = null;
+    function layout() {
+      if (anim) { anim.cancel(); anim = null; }
+      track.textContent = '';
+      track.appendChild(buildGroup());
+      var groupW = track.scrollWidth;
+      if (!groupW) return;
+      // repeat until the track covers the viewport plus one whole group, so the
+      // wrap point is always off-screen
+      var need = Math.ceil((view.clientWidth + groupW) / groupW) + 1;
+      for (var i = 1; i < need; i++) track.appendChild(buildGroup());
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!track.animate) return; // no WAAPI: static list, still readable
+      anim = track.animate(
+        [{ transform: 'translateX(0)' }, { transform: 'translateX(' + (-groupW) + 'px)' }],
+        { duration: (groupW / SPEED) * 1000, iterations: Infinity, easing: 'linear' }
+      );
+    }
+    layout();
+    // Fraunces arrives via woff2 after this runs; re-measure once it lands or the group
+    // width (and so the seamless wrap point) is computed against the Georgia fallback
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout).catch(function () { });
+
+    strip.addEventListener('mouseenter', function () { if (anim) anim.pause(); });
+    strip.addEventListener('mouseleave', function () { if (anim) anim.play(); });
+    var rt;
+    window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(layout, 250); });
   })();
 
   ready(function () {
