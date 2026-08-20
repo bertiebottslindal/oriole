@@ -1,6 +1,27 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.8.0 (2026-08-20, Roberta - form audit fixes):
+   (f) insertAboveSubmit() helper - the submit button is nested inside a wrapper on the
+       registration form, so form.insertBefore() threw and took the submit handler with it.
+   (a) VALIDATION now covers <textarea> too. It only ever queried input+select, and wf.js sets
+       novalidate, so required textareas were enforced NOWHERE - the registration form posted with
+       Allergies blank.
+   (b) Every required <select> now opens on a blank "Select ..." placeholder. Previously only
+       Photo Release had one, so an untouched dropdown silently posted option 1: Child Age
+       "Under 18 months (for interest)", Class Toddler, Duty Day Participating "Yes - participating".
+   (c) Second-parent email/phone fields are coerced to type=email/tel at runtime so they get the
+       same format checks as the first parent's (they were type=text and accepted anything).
+       Phone check widened to 10-15 digits so extensions and +country prefixes pass.
+   (d) Failed validation now shows a SUMMARY above the submit button naming each field that needs
+       attention, each one a link that scrolls to and focuses that field. On the 60-field
+       registration form the parent used to click Submit and see nothing happen, because all the
+       inline errors were thousands of pixels above the fold. Errors also clear as they are fixed.
+   (e) SPAM GATE reworked: the old rule binned any submit within 3s of page load, faking success
+       and posting nothing - which also binned genuine parents whose fields were restored from
+       session storage or filled by browser autofill. Now a form is only treated as a bot if the
+       honeypot is filled, or (lead forms only) no trusted user interaction ever happened on it.
+       The long registration/application/camp forms are never time-gated.
    v1.7.2 (2026-08-20, Roberta): REQUIRED CWELCC + fee-schedule acknowledgement on the
    application form (/how-to-enrol, form "Application 2026-2027") - "not funded by CWELCC and I
    have read the fees page", with "fees page" linking to /fee-schedule in a new tab. Unchecked =
@@ -101,6 +122,11 @@
     '.on-ck input{width:18px;height:18px;min-width:18px;margin:2px 0 0;accent-color:#5B990A;cursor:pointer;flex:0 0 auto}' +
     '.on-ck label{flex:1 1 0;min-width:0;font-family:Inter,Arial,sans-serif;font-size:.85rem;font-weight:500;line-height:1.45;color:#5E6157;cursor:pointer}' +
     '.on-ck .on-ferr{flex-basis:100%;margin-left:28px}' +
+    '.on-sum{display:none;grid-column:1/-1;width:100%;background:#FBF0EC;border:1px solid #E3B9A8;border-radius:12px;padding:14px 16px;margin:16px 0 12px;font-family:Inter,Arial,sans-serif}' +
+    '.on-sum-h{font-size:.9rem;font-weight:700;color:#A8502A;margin-bottom:6px}' +
+    '.on-sum-l{font-size:.85rem;line-height:1.7;color:#5E6157}' +
+    '.on-sum-i{color:#A8502A;text-decoration:underline;cursor:pointer;margin-right:10px}' +
+    '.on-sum-m{color:#5E6157}' +
     '.on-ck-gate{background:#F6FAEF;border:1px solid #DCE9C7;border-radius:12px;padding:14px 16px;margin:16px 0 12px}' +
     '.on-ck-gate label{color:#3F4A35}' +
     '.on-ck-link{color:#46760A;text-decoration:underline;font-weight:600}';
@@ -225,19 +251,21 @@
 
     // ---- select options (Webflow drops WHTML <option>s at publish) ----
     var selOpts = {
-      'Child Age': ['Under 18 months (for interest)', '18 months \u2013 2.5 years', '2.6 \u2013 3 years', '3 \u2013 5 years'],
-      'Child Age|Summer Camp Lead Form': ['2 years', '3 years', '4 years', '5 years'],
-      'Gender': ['Prefer not to say', 'Girl', 'Boy', 'Other'],
-      'Class': ['Toddler \u00b7 18 months \u2013 2.5 years', 'Junior Preschool \u00b7 2.6 \u2013 3 years', 'Senior Preschool \u00b7 3 \u2013 5 years'],
-      'Schedule': ['2 mornings (Tue & Thu)', '3 mornings', '4 mornings', '5 mornings', 'Extended day \u2014 5 full days, 9:00\u20132:45 (new, ages 2.5+)'],
-      'Board Interest': ['No', 'Yes', 'Tell me more'],
-      'Camp Age': ['2 years', '3 years', '4 years', '5 years'],
-      'New or Returning': ['New family', 'Returning family'],
-      'First Dropoff': ['Yes', 'No'],
-      'Toilet Trained': ['Yes', 'Mostly', 'Not yet'],
-      'EpiPen': ['No', 'Yes'],
-      'Child Class': ['Toddler', 'Junior Preschool', 'Senior Preschool'],
-      'Duty Day Participating': ['Yes \u2014 participating', 'No \u2014 non-participating'],
+      // every list leads with a 'Select ...' placeholder: blank value, so a required dropdown
+      // cannot be answered by silence (v1.8.0 - previously option 1 was pre-selected and posted)
+      'Child Age': ['Select an age', 'Under 18 months (for interest)', '18 months \u2013 2.5 years', '2.6 \u2013 3 years', '3 \u2013 5 years'],
+      'Child Age|Summer Camp Lead Form': ['Select an age', '2 years', '3 years', '4 years', '5 years'],
+      'Gender': ['Select an option', 'Prefer not to say', 'Girl', 'Boy', 'Other'],
+      'Class': ['Select a class', 'Toddler \u00b7 18 months \u2013 2.5 years', 'Junior Preschool \u00b7 2.6 \u2013 3 years', 'Senior Preschool \u00b7 3 \u2013 5 years'],
+      'Schedule': ['Select a schedule', '2 mornings (Tue & Thu)', '3 mornings', '4 mornings', '5 mornings', 'Extended day \u2014 5 full days, 9:00\u20132:45 (new, ages 2.5+)'],
+      'Board Interest': ['Select an option', 'No', 'Yes', 'Tell me more'],
+      'Camp Age': ['Select an age', '2 years', '3 years', '4 years', '5 years'],
+      'New or Returning': ['Select an option', 'New family', 'Returning family'],
+      'First Dropoff': ['Select an option', 'Yes', 'No'],
+      'Toilet Trained': ['Select an option', 'Yes', 'Mostly', 'Not yet'],
+      'EpiPen': ['Select an option', 'No', 'Yes'],
+      'Child Class': ['Select a class', 'Toddler', 'Junior Preschool', 'Senior Preschool'],
+      'Duty Day Participating': ['Select an option', 'Yes \u2014 participating', 'No \u2014 non-participating'],
       'Photo Release': ['Select an option', 'I consent to photos', 'I do not consent to photos']
     };
     document.querySelectorAll('.on-form select').forEach(function (s) {
@@ -253,6 +281,15 @@
         el.textContent = o;
         s.appendChild(el);
       });
+    });
+
+    // ---- email/phone fields typed as text get the real types, so they get format checks too ----
+    // (v1.8.0: second-parent fields were type=text and REQUIRED, so "not-an-email" was accepted.
+    //  'Caregiver Phones' is deliberately skipped - it holds more than one number.)
+    document.querySelectorAll('.on-form input[type="text"]').forEach(function (el) {
+      var n = el.name || '';
+      if (/email$/i.test(n)) { try { el.type = 'email'; } catch (e) { } return; }
+      if (/(phone|cell)$/i.test(n)) { try { el.type = 'tel'; } catch (e) { } }
     });
 
     // ---- date of birth: native calendar picker (Heather batch 3) ----
@@ -303,7 +340,7 @@
     // ---- application: Toddler schedules are 2 (Tue/Thu), 3 (M/W/F) or 5 mornings only (Heather batch 3) ----
     var clsSel = appForm ? appForm.querySelector('select[name="Class"]') : null;
     var schSel = appForm ? appForm.querySelector('select[name="Schedule"]') : null;
-    var SCHED_TODDLER = ['2 mornings (Tue & Thu)', '3 mornings (Mon/Wed/Fri)', '5 mornings'];
+    var SCHED_TODDLER = ['Select a schedule', '2 mornings (Tue & Thu)', '3 mornings (Mon/Wed/Fri)', '5 mornings'];
     function rebuildSched() {
       if (!clsSel || !schSel) return;
       var list = clsSel.value.indexOf('Toddler') === 0 ? SCHED_TODDLER : selOpts['Schedule'];
@@ -379,11 +416,96 @@
       }
       n.textContent = msg;
     }
+    // the submit button is a direct child on some forms and nested on others (the registration
+    // form nests it), so always insert relative to the button's own parent - insertBefore on the
+    // form itself throws NotFoundError and kills the whole submit handler
+    function insertAboveSubmit(f, node) {
+      var sub = f.querySelector('input[type="submit"]');
+      if (sub && sub.parentNode) sub.parentNode.insertBefore(node, sub);
+      else f.appendChild(node);
+    }
     function clearErr(el) {
       el.style.borderColor = '';
       var n = el.parentNode.querySelector('.on-ferr');
       if (n) n.remove();
     }
+    // a field's own question, for the summary list above the submit button
+    function labelFor(el, dup) {
+      var box = el.closest('.on-ff, .on-ff-full, .on11-part, .on-ck, .w-checkbox');
+      var lab = box ? box.querySelector('label') : null;
+      var t = lab ? (lab.textContent || '').trim() : '';
+      if (!t) t = el.getAttribute('placeholder') || el.name || 'This field';
+      t = t.replace(/\s*\*\s*$/, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+      // "Email address" appears against both parents, so a repeated label is no use on its own -
+      // fall back to the field name, which is unique ("Parent 2 Email")
+      if (dup && dup[t] > 1 && el.name) return el.name;
+      return t;
+    }
+    // v1.8.0: on a long form the inline errors can be thousands of pixels above the submit
+    // button, so clicking Submit looked like nothing happened. This names them where the
+    // parent is actually looking, and each name jumps to its field.
+    function summarise(f, bad) {
+      var w = f.querySelector('.on-sum');
+      if (!w) {
+        w = document.createElement('div');
+        w.className = 'on-sum';
+        w.setAttribute('role', 'alert');
+        insertAboveSubmit(f, w);
+      }
+      if (!bad.length) { w.style.display = 'none'; w.innerHTML = ''; return; }
+      w.innerHTML = '';
+      w.style.display = 'block';
+      var h = document.createElement('div');
+      h.className = 'on-sum-h';
+      h.textContent = bad.length === 1
+        ? 'One answer is still needed before you can submit:'
+        : bad.length + ' answers are still needed before you can submit:';
+      w.appendChild(h);
+      var dup = {};
+      f.querySelectorAll('input,select,textarea').forEach(function (el) {
+        if (el.type === 'submit' || el.hasAttribute('data-hp')) return;
+        var t = labelFor(el);
+        dup[t] = (dup[t] || 0) + 1;
+      });
+      var list = document.createElement('div');
+      list.className = 'on-sum-l';
+      bad.slice(0, 10).forEach(function (el) {
+        var a = document.createElement('a');
+        a.href = '#';
+        a.className = 'on-sum-i';
+        a.textContent = labelFor(el, dup);
+        a.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { el.scrollIntoView(); }
+          setTimeout(function () { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }, 350);
+        });
+        list.appendChild(a);
+      });
+      if (bad.length > 10) {
+        var m = document.createElement('span');
+        m.className = 'on-sum-m';
+        m.textContent = 'and ' + (bad.length - 10) + ' more further up the form';
+        list.appendChild(m);
+      }
+      w.appendChild(list);
+    }
+    // clear a field's error as soon as the parent fixes it
+    ['input', 'change'].forEach(function (ev) {
+      document.addEventListener(ev, function (e) {
+        var el = e.target;
+        if (!el || !el.closest || !el.closest('.on-form')) return;
+        if (el.type === 'checkbox' ? el.checked : (el.value || '').trim()) clearErr(el);
+      }, true);
+    });
+    // a form a human has actually touched (bots that post without real events never will)
+    var touched = [];
+    ['pointerdown', 'keydown', 'input', 'change'].forEach(function (ev) {
+      document.addEventListener(ev, function (e) {
+        if (!e.isTrusted || !e.target || !e.target.closest) return;
+        var f = e.target.closest('.on-form form');
+        if (f && touched.indexOf(f) === -1) touched.push(f);
+      }, true);
+    });
     document.querySelectorAll('.on-form form, form.on-form').forEach(function (f) {
       f.setAttribute('novalidate', 'novalidate');
     });
@@ -422,8 +544,7 @@
       cb.addEventListener('change', function () { if (cb.checked) clearErr(cb); });
       wrap.appendChild(cb);
       wrap.appendChild(lab);
-      var submit = f.querySelector('input[type="submit"]');
-      if (submit) f.insertBefore(wrap, submit); else f.appendChild(wrap);
+      insertAboveSubmit(f, wrap);
     });
 
     // ---- required CWELCC + fee-schedule acknowledgement on the application form (Roberta, 2026-08-20) ----
@@ -455,8 +576,7 @@
       aCb.addEventListener('change', function () { if (aCb.checked) clearErr(aCb); });
       aWrap.appendChild(aCb);
       aWrap.appendChild(aLab);
-      var aSubmit = appForm.querySelector('input[type="submit"]');
-      if (aSubmit) appForm.insertBefore(aWrap, aSubmit); else appForm.appendChild(aWrap);
+      insertAboveSubmit(appForm, aWrap);
     }
 
     document.addEventListener('submit', function (e) {
@@ -464,24 +584,34 @@
       if (!f || !(f.closest('.on-form'))) return;
       {
         var ok = true;
-        f.querySelectorAll('input,select').forEach(function (el) {
-          if (el.type === 'submit') return;
+        var bad = [];
+        // v1.8.0: textarea included - required textareas (Allergies, Past Illnesses...) were
+        // enforced nowhere, because the form carries novalidate
+        f.querySelectorAll('input,select,textarea').forEach(function (el) {
+          if (el.type === 'submit' || el.hasAttribute('data-hp')) return;
           clearErr(el);
           if (el.type === 'checkbox') {
             // .value is always 'on', so required checkboxes need an explicit checked test
-            if (el.required && !el.checked) { err(el, 'Please confirm this to continue'); ok = false; }
+            if (el.required && !el.checked) { err(el, 'Please confirm this to continue'); bad.push(el); ok = false; }
             return;
           }
           var v = (el.value || '').trim();
-          if (el.required && !v) { err(el, 'This field is required'); ok = false; return; }
-          if (el.type === 'email' && v && !emailRe.test(v)) { err(el, 'Please enter a valid email address'); ok = false; }
+          if (el.required && !v) {
+            err(el, el.tagName === 'SELECT' ? 'Please choose an option' : 'This field is required');
+            bad.push(el); ok = false; return;
+          }
+          if (el.type === 'email' && v && !emailRe.test(v)) { err(el, 'Please enter a valid email address'); bad.push(el); ok = false; }
           if (el.type === 'tel' && v) {
             var digits = v.replace(/\D/g, '');
-            if (digits.length < 10 || digits.length > 11) { err(el, 'Please enter a valid phone number'); ok = false; }
+            if (digits.length < 10 || digits.length > 15) { err(el, 'Please enter a valid phone number'); bad.push(el); ok = false; }
           }
         });
         e.preventDefault(); e.stopImmediatePropagation();
-        if (!ok) return;
+        summarise(f, bad);
+        if (!ok) {
+          if (bad[0]) { try { bad[0].focus({ preventScroll: true }); } catch (err2) { } }
+          return;
+        }
         // Submit directly to the Webflow forms API (runtime handler is unreliable
         // on these forms). response.ok checked; one retry; honest failure message.
         var w = f.closest('.w-form') || f.parentNode;
@@ -519,10 +649,16 @@
         function post() {
           return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
         }
-        // Spam gate: filled honeypot or a submit within 3s of page load = bot.
-        // Fake the normal success (no POST) so the bot can't learn it was caught.
+        // Spam gate (v1.8.0): a filled honeypot is always a bot. Beyond that, only the short
+        // lead forms are gated, and on "did a human ever touch this form?" rather than a clock -
+        // the old 3s-since-load rule silently binned real parents whose fields were restored from
+        // session storage or filled by autofill. Registration/application/camp forms are never
+        // gated this way: nothing fills 60 fields by accident, and a lost registration is
+        // far more costly than a spam row.
         var hpEl = f.querySelector('input[data-hp]');
-        if ((hpEl && (hpEl.value || '').trim() !== '') || (Date.now() - T0 < 3000)) {
+        var isLead = /Lead Form$/.test(f.getAttribute('data-name') || '');
+        var untouched = isLead && touched.indexOf(f) === -1;
+        if ((hpEl && (hpEl.value || '').trim() !== '') || untouched) {
           setTimeout(function () { finish(true); }, 600);
           return;
         }
