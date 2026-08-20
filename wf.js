@@ -1,6 +1,12 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.7.2 (2026-08-20, Roberta): REQUIRED CWELCC + fee-schedule acknowledgement on the
+   application form (/how-to-enrol, form "Application 2026-2027") - "not funded by CWELCC and I
+   have read the fees page", with "fees page" linking to /fee-schedule in a new tab. Unchecked =
+   submit blocked, nothing posted. Posts as fields[CWELCC Acknowledgement]=Yes, matching the lead
+   forms. Deliberately excluded from session persistence (data-nostore) so a returning parent
+   ticks it themselves rather than having it restored for them.
    v1.7.1 (2026-08-20): enrichment strip reworked per Roberta - label pinned LEFT, words scroll
    horizontally in a seamless infinite marquee (was a centred crossfade), and the strip moved from
    under the hero to under the green numbers bar (.on-trust). Colours unchanged.
@@ -94,7 +100,10 @@
     '.on-ck{grid-column:1/-1;width:100%;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;margin:2px 0 2px}' +
     '.on-ck input{width:18px;height:18px;min-width:18px;margin:2px 0 0;accent-color:#5B990A;cursor:pointer;flex:0 0 auto}' +
     '.on-ck label{flex:1 1 0;min-width:0;font-family:Inter,Arial,sans-serif;font-size:.85rem;font-weight:500;line-height:1.45;color:#5E6157;cursor:pointer}' +
-    '.on-ck .on-ferr{flex-basis:100%;margin-left:28px}';
+    '.on-ck .on-ferr{flex-basis:100%;margin-left:28px}' +
+    '.on-ck-gate{background:#F6FAEF;border:1px solid #DCE9C7;border-radius:12px;padding:14px 16px;margin:16px 0 12px}' +
+    '.on-ck-gate label{color:#3F4A35}' +
+    '.on-ck-link{color:#46760A;text-decoration:underline;font-weight:600}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
@@ -269,6 +278,7 @@
       document.querySelectorAll('.on-form form').forEach(function (f) {
         f.querySelectorAll('input,select,textarea').forEach(function (el) {
           if (!el.name || el.type === 'submit' || el.type === 'hidden') return;
+          if (el.hasAttribute('data-nostore')) return;
           var v = store.fields[fkey(el, f)];
           if (v === undefined) return;
           if (el.type === 'checkbox') el.checked = v === '1';
@@ -278,6 +288,7 @@
           f.addEventListener(ev, function () {
             f.querySelectorAll('input,select,textarea').forEach(function (el) {
               if (!el.name || el.type === 'submit' || el.type === 'hidden') return;
+              if (el.hasAttribute('data-nostore')) return;
               store.fields[fkey(el, f)] = el.type === 'checkbox' ? (el.checked ? '1' : '') : el.value;
             });
             saveState(STORE_KEY, store);
@@ -414,6 +425,39 @@
       var submit = f.querySelector('input[type="submit"]');
       if (submit) f.insertBefore(wrap, submit); else f.appendChild(wrap);
     });
+
+    // ---- required CWELCC + fee-schedule acknowledgement on the application form (Roberta, 2026-08-20) ----
+    // Same gate as the lead forms, but it also confirms the parent has seen the fees: an application
+    // carries a $150 non-refundable fee, so "I did not know it was unsubsidised" must not survive it.
+    if (appForm && !appForm.querySelector('input[name="CWELCC Acknowledgement"]')) {
+      var aWrap = document.createElement('div');
+      aWrap.className = 'on-ck on-ck-gate';
+      var aCb = document.createElement('input');
+      aCb.type = 'checkbox';
+      aCb.name = 'CWELCC Acknowledgement';
+      aCb.setAttribute('data-name', 'CWELCC Acknowledgement');
+      aCb.setAttribute('data-nostore', '1');
+      aCb.id = 'on-ck-app-cwelcc';
+      aCb.required = true;
+      var aLab = document.createElement('label');
+      aLab.setAttribute('for', 'on-ck-app-cwelcc');
+      aLab.appendChild(document.createTextNode('I understand that Oriole Nursery School is not funded by CWELCC and I have read the '));
+      var aLink = document.createElement('a');
+      aLink.href = '/fee-schedule';
+      aLink.target = '_blank';
+      aLink.rel = 'noopener';
+      aLink.className = 'on-ck-link';
+      aLink.textContent = 'fees page';
+      // an <a> inside a <label> does not toggle the box per spec; stopPropagation covers the rest
+      aLink.addEventListener('click', function (ev) { ev.stopPropagation(); });
+      aLab.appendChild(aLink);
+      aLab.appendChild(document.createTextNode('.'));
+      aCb.addEventListener('change', function () { if (aCb.checked) clearErr(aCb); });
+      aWrap.appendChild(aCb);
+      aWrap.appendChild(aLab);
+      var aSubmit = appForm.querySelector('input[type="submit"]');
+      if (aSubmit) appForm.insertBefore(aWrap, aSubmit); else appForm.appendChild(aWrap);
+    }
 
     document.addEventListener('submit', function (e) {
       var f = e.target.closest ? e.target : null;
