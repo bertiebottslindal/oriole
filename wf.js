@@ -1,6 +1,26 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.11.0 (2026-08-21, Roberta) — META PIXEL INSTALLED HERE. The site had no pixel at all, and
+   Webflow's custom-code head is not reachable from tooling right now, so the base pixel is loaded
+   from this file instead. wf.js is on every page via the footer script tag, so coverage is complete;
+   the only cost is that PageView fires a moment later than a <head> install would. Meta's URL-based
+   event rules are evaluated client-side by fbevents.js, so they work normally from here.
+   ⚠️ IF THE PIXEL IS EVER PASTED INTO WEBFLOW'S HEAD, DELETE IT FROM THIS FILE FIRST. Two copies
+   means PageView and every URL-rule event fires twice and every number doubles. The guard below
+   stops a double-init from this file alone, but it cannot see a second copy in the page head.
+   v1.10.0 (2026-08-21, Roberta) — APPLICATION FEE PAYMENT. /how-to-enrol already told applicants
+   "You'll be taken to secure checkout to pay the $150 application fee", and nothing ever took them
+   there: the form redirected to /thank-you, which said the Registrar would confirm payment details.
+   The thank-you page now carries a real payment step for form=application — pay $150 by card, or
+   send an e-transfer. Payment comes AFTER the form saves (Roberta's call), so an abandoned payment
+   never loses an application. Stripe returns to /thank-you?form=appfee, which renders the paid state. That is a
+   DIFFERENT form value on purpose: if the paid page still matched form=application, Meta's
+   SubmitApplication rule would fire a second time and double-count every application.
+   ⚠️ Two constants below must be filled before this does anything: APP_FEE_LINK (Stripe Payment Link)
+   and ETRANSFER_TO. While APP_FEE_LINK is empty the card button is hidden and only e-transfer shows;
+   while BOTH are empty the page falls back to the old "we'll email you payment options" wording, so
+   shipping this early is safe.
    v1.9.4 (2026-08-20, Roberta): the homepage contact block led with the Parent Handbook. Heading is
    now "Have a question or want to book a tour?", and the sub-line under it leads with the tour as
    well rather than opening on the handbook. Handbook is still offered, just second.
@@ -66,6 +86,21 @@
    1.4.1 removed "within one business day" sitewide + morning hours on confirmations. */
 (function () {
   var T0 = Date.now();
+
+  // ---- Meta pixel (v1.11.0) · dataset 1372762647822184 "Oriole Website" ----
+  // See the header note before adding this anywhere else on the site.
+  (function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;                       // already initialised — never init twice
+    n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+    if (!f._fbq) f._fbq = n;
+    n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+    t = b.createElement(e); t.async = !0; t.src = v;
+    s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+  })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+  try {
+    window.fbq('init', '1372762647822184');
+    window.fbq('track', 'PageView');
+  } catch (e) { /* never let the pixel break the site */ }
   // ---- mobile hamburger ----
   document.addEventListener('click', function (e) {
     var hb = e.target.closest('.on-hb');
@@ -551,8 +586,13 @@
         }[fname] || 'general';
         q = 'form=lead&topic=' + topic;
       } else if (fname === 'Application 2026-2027') {
+        var _cf = document.querySelector('[name="Child First Name"]');
+        var _cl = document.querySelector('[name="Child Last Name"]');
+        var _pe = document.querySelector('[name="Email"]');
         q = 'form=application&cls=' + encodeURIComponent(clsSel ? clsSel.value : '') +
-          '&sched=' + encodeURIComponent(schSel ? schSel.value : '');
+          '&sched=' + encodeURIComponent(schSel ? schSel.value : '') +
+          '&child=' + encodeURIComponent(((_cf ? _cf.value : '') + ' ' + (_cl ? _cl.value : '')).trim()) +
+          '&em=' + encodeURIComponent(_pe ? _pe.value : '');
         try { sessionStorage.removeItem('on_app_v1'); } catch (e) { }
       } else if (fname === 'Registration Package') {
         var cc = document.querySelector('select[name="Child Class"]');
@@ -1271,6 +1311,11 @@
       var tNote = document.querySelector('.on19-note');
       var tBtns = document.querySelectorAll('.on-band-btns a');
       var HEATHER = '<a class="on19-link" href="mailto:heather@oriolenurseryschool.com">heather@oriolenurseryschool.com</a>';
+      // ---- application fee payment (v1.10.0) ----
+      // Flat $150 for every applicant. The 5% sibling discount applies to tuition, NOT the
+      // application fee (Roberta, 2026-08-21) — so one price, one link, no discount logic.
+      var APP_FEE_LINK = '';   // TODO Stripe Payment Link, e.g. https://buy.stripe.com/xxxx
+      var ETRANSFER_TO = '';   // TODO e-transfer recipient, e.g. info@oriolenurseryschool.com
       var FEE_LINE = 'Full fee table, payment dates and policies: <a class="on19-link" href="/fee-schedule">Fee Schedule</a>. Questions? Email ' + HEATHER + '.';
       function setList(items) {
         confList.innerHTML = items.map(function (t) { return '<li class="on19-week">' + t + '</li>'; }).join('');
@@ -1323,18 +1368,80 @@
           if (tNote) tNote.innerHTML = 'Questions in the meantime? Email ' + HEATHER + ' or call 416 960 1293.';
           setBtn('/', 'Oriole home');
         }
-      } else if (tForm === 'application') {
-        if (tHead) tHead.textContent = 'Application received — thank you!';
-        if (tSub) tSub.textContent = 'Our Registrar will be in touch about next steps.';
+      } else if (tForm === 'application' || tForm === 'appfee') {
+        // 'appfee' = returning from Stripe. A separate value, not a flag on 'application',
+        // so the SubmitApplication and Purchase URL rules can never match the same page.
+        var appPaid = tForm === 'appfee';
+        var canCard = !!APP_FEE_LINK, canEmt = !!ETRANSFER_TO;
+        if (tHead) tHead.textContent = appPaid
+          ? 'Payment received — thank you!'
+          : 'Application received — thank you!';
+        if (tSub) tSub.textContent = appPaid
+          ? 'Your application and your $150 fee are both in. Our Registrar will be in touch about next steps.'
+          : (canCard || canEmt
+              ? 'One last step: the $150 application fee. Our Registrar will be in touch about next steps.'
+              : 'Our Registrar will be in touch about next steps.');
         if (tCard) tCard.textContent = 'Your application';
         var tItems = [];
         if (tqp.get('cls')) tItems.push('Class: ' + tqp.get('cls'));
         if (tqp.get('sched')) tItems.push('Schedule: ' + tqp.get('sched'));
-        tItems.push('A $150 non-refundable application fee is due at submission — the Registrar will confirm payment details');
+        tItems.push(appPaid
+          ? '✓ $150 application fee paid'
+          : (canCard || canEmt
+              ? 'A $150 non-refundable application fee is due — pay it below'
+              : 'A $150 non-refundable application fee is due at submission — the Registrar will confirm payment details'));
         tItems.push('After acceptance: an $850 deposit is due four weeks after your acceptance letter');
         setList(tItems);
         if (tNote) tNote.innerHTML = FEE_LINE;
         setBtn('/fee-schedule', 'See the Fee Schedule');
+
+        // ---- payment band: card and/or e-transfer ----
+        if (!appPaid && (canCard || canEmt)) {
+          var aSec = document.querySelector('main section:last-of-type, section:last-of-type');
+          if (aSec) {
+            var cardBtn = canCard
+              ? '<div class="on-band-btns"><a class="on-btnl" id="app-pay-btn" href="#">Pay $150 by card</a></div>'
+              : '';
+            var emtLink = canEmt
+              ? '<p style="margin:14px 0 0;text-align:center"><a href="#" id="app-emt-btn" style="color:#fff;text-decoration:underline;font-family:Inter,Arial,sans-serif;font-size:.9rem">' +
+                (canCard ? 'I’d rather send an e-transfer' : 'How to send your e-transfer') + '</a></p>'
+              : '';
+            var pay = document.createElement('section');
+            pay.innerHTML = '<div class="on4-day-in"><div class="on-band">' +
+              '<h2 class="on-h2w">The $150 application fee</h2>' +
+              '<p class="on-band-p">One-time and non-refundable. Your application is already saved, so you can pay now or come back to this page later.</p>' +
+              cardBtn + emtLink +
+              '<div id="app-emt-box" style="display:none;margin:16px auto 0;max-width:540px;text-align:left;' +
+                'font-family:Inter,Arial,sans-serif;font-size:.95rem;color:#fff;line-height:1.5">' +
+                '<p style="margin:0 0 6px"><b>Interac e-transfer</b></p>' +
+                '<p style="margin:0 0 6px">Send <b>$150</b> to <b>' + ETRANSFER_TO + '</b>.</p>' +
+                '<p style="margin:0">Please put your child’s full name in the message so we can match it to the application. ' +
+                'We’ll confirm by email once it arrives.</p></div>' +
+              '</div></div>';
+            aSec.parentNode.insertBefore(pay, aSec.nextSibling);
+
+            var emtBtn = document.getElementById('app-emt-btn');
+            if (emtBtn) emtBtn.addEventListener('click', function (e) {
+              e.preventDefault();
+              var box = document.getElementById('app-emt-box');
+              box.style.display = box.style.display === 'none' ? 'block' : 'none';
+            });
+            var apBtn = document.getElementById('app-pay-btn');
+            if (apBtn) apBtn.addEventListener('click', function (e) {
+              e.preventDefault();
+              // hand Stripe what it needs to reconcile the payment to the application.
+              // client_reference_id only accepts letters, numbers, - and _ (200 max), so the
+              // child's name is slugged; the readable version rides along on the email.
+              var ref = ((tqp.get('child') || '') + '-' + (tqp.get('em') || ''))
+                .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 200);
+              var u = APP_FEE_LINK + (APP_FEE_LINK.indexOf('?') > -1 ? '&' : '?');
+              if (ref) u += 'client_reference_id=' + ref + '&';
+              var em = tqp.get('em');
+              u += em ? 'prefilled_email=' + encodeURIComponent(em) : '';
+              location.href = u.replace(/[?&]$/, '');
+            });
+          }
+        }
       } else if (tForm === 'camp') {
         if (tHead) tHead.textContent = 'Registration forms received — thank you!';
         if (tSub) tSub.textContent = 'We’ll email PayPal, cheque and e-transfer payment options.';
