@@ -1,6 +1,11 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.9.3 (2026-08-20, Roberta): Phone is REQUIRED on every lead form. The home page form had
+   been softened to "Phone (optional)" for conversion; an enquiry arrived that same evening with
+   no number, which is a lead Heather cannot ring. Phone is now set required in JS on every
+   .on-form Phone field, after the softener, so it holds regardless of the Webflow markup.
+   Last name stays optional on the home form.
    v1.9.2: day-picker copy reframed as a PREFERENCE rather than a selection - "Other days"
    opens with "we will accommodate it if we have the availability", so a family asking for
    something off-schedule is invited rather than corrected.
@@ -938,14 +943,30 @@
       setMode(false);
     })();
 
-    // ---- CRO: soften Handbook form (home): last name + phone optional ----
+    // ---- CRO: soften Handbook form (home): last name optional ----
+    // v1.9.3: Phone was in this list and is not any more. A lead with no number cannot be
+    // called, and calling is what turns an enquiry into a tour. Last name stays optional.
     if (location.pathname === '/' || location.pathname === '') {
-      document.querySelectorAll('.on-form input[name="Last Name"], .on-form input[name="Phone"]').forEach(function (el) {
+      document.querySelectorAll('.on-form input[name="Last Name"]').forEach(function (el) {
         el.required = false;
         var lab = el.parentNode.querySelector('label');
         if (lab) lab.textContent = lab.textContent.replace(' *', ' (optional)');
       });
     }
+
+    // ---- phone is required on every lead form (v1.9.3) ----
+    // Set explicitly rather than left to the Webflow markup, so this holds whatever any earlier
+    // block did and whatever the base label says. Runs after the softener above, so it wins.
+    document.querySelectorAll('.on-form input[name="Phone"]').forEach(function (el) {
+      el.required = true;
+      try { el.type = 'tel'; } catch (e) { }
+      var box = el.closest('.on-ff, .on-ff-full') || el.parentNode;
+      var lab = box.querySelector('label');
+      if (lab) {
+        var t = lab.textContent.replace(/\s*\(optional\)\s*$/i, '').trim();
+        lab.textContent = /\*$/.test(t) ? t : t + ' *';
+      }
+    });
 
     // ---- CRO: Google rating badge under hero headline ----
     document.querySelectorAll('.on-hero-btns').forEach(function (btns) {
