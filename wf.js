@@ -1,6 +1,9 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.9.2: day-picker copy reframed as a PREFERENCE rather than a selection - "Other days"
+   opens with "we will accommodate it if we have the availability", so a family asking for
+   something off-schedule is invited rather than corrected.
    v1.9.1: the day-picker error is rendered AFTER the main validation loop, which calls
    clearErr() on every named field and was deleting it (the hidden Preferred Days input is in that
    loop). Symptom: submit silently refused with no message. Host lookup also learned .on11-full,
@@ -426,7 +429,7 @@
       oCb.setAttribute('data-other', '1');
       oCb.setAttribute('data-nostore', '1');
       oLab.appendChild(oCb);
-      oLab.appendChild(document.createTextNode('Other'));
+      oLab.appendChild(document.createTextNode('Other days'));
       row.appendChild(oLab);
 
       var note = document.createElement('div');
@@ -438,7 +441,7 @@
       oTxt.className = 'on-fi';
       oTxt.setAttribute('data-other-text', '1');
       oTxt.setAttribute('data-nostore', '1');
-      oTxt.placeholder = 'Tell us the days you would like';
+      oTxt.placeholder = 'Which days would suit you best?';
       oWrap.appendChild(oTxt);
 
       wrap.appendChild(row);
@@ -476,10 +479,14 @@
         oLab.classList.toggle('on-dp-on', oCb.checked);
         oWrap.classList.toggle('on-dp-show', oCb.checked);
         if (spec.fixed) {
-          note.textContent = 'These days are set by the schedule you chose. If you need something different, tick Other.';
+          note.textContent = oCb.checked
+            ? 'Tell us the days you would prefer. We will accommodate it if we have the availability.'
+            : 'These are the days that go with the schedule you chose. Would prefer different ones? Tick Other days.';
         } else if (spec.n) {
           var got = boxes.filter(function (b) { return b.cb.checked; }).length;
-          note.textContent = 'Choose ' + spec.n + ' day' + (spec.n === 1 ? '' : 's') + '. ' + got + ' selected.';
+          note.textContent = oCb.checked
+            ? 'Tell us the days you would prefer. We will accommodate it if we have the availability.'
+            : 'Choose your ' + spec.n + ' preferred day' + (spec.n === 1 ? '' : 's') + '. ' + got + ' selected.';
         } else {
           note.textContent = 'Choose your schedule above first.';
         }
@@ -499,7 +506,7 @@
         var spec = schedSpec();
         var got = boxes.filter(function (b) { return b.cb.checked; }).length;
         if (oCb.checked) {
-          if (!oTxt.value.trim()) return 'Tell us which days you would like';
+          if (!oTxt.value.trim()) return 'Tell us which days you would prefer';
           return null;                                   // Other is a request, not a fixed schedule
         }
         if (!spec.n) return null;                        // no schedule chosen yet, Schedule is required anyway
