@@ -1,6 +1,17 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.9.1: the day-picker error is rendered AFTER the main validation loop, which calls
+   clearErr() on every named field and was deleting it (the hidden Preferred Days input is in that
+   loop). Symptom: submit silently refused with no message. Host lookup also learned .on11-full,
+   the application form's own wrapper class.
+   v1.9.0 (2026-08-20, Roberta): the application form's Preferred Days field was free text, so
+   Heather read prose and ticked five booleans by hand for every application (the sheet stores days
+   as School Year Registrations G-K). It is now five day checkboxes plus an "Other" box, composed
+   back into the same hidden Preferred Days field so nothing downstream changes. Days lock when the
+   chosen schedule fixes them (2 mornings = Tue/Thu, Toddler 3 = Mon/Wed/Fri, 5 = all), stay open
+   where the school actually negotiates (Junior/Senior 3 and 4), and the count is checked on submit.
+   Other exists because three enrolled children are on patterns the Schedule list cannot express.
    v1.8.1 (2026-08-20): the application form's Schedule dropdown is rebuilt by rebuildSched()
    when the Class changes, and that second code path did not carry the blank-placeholder rule -
    so Schedule sat on the literal string "Select a schedule" and would have posted it as the
@@ -110,6 +121,20 @@
     '.on-tbtn:hover{background:#EEF4E2}' +
     '.on15-wk-past{opacity:.45;pointer-events:none;cursor:default}' +
     'input[type=date].on-fi{height:auto;min-height:48px;line-height:1.4}' +
+    // application: Preferred Days day-picker (replaces a free-text box that Heather had to translate)
+    '.on-dp{grid-column:1/-1;width:100%}' +
+    '.on-dp-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}' +
+    '.on-dp-d{display:inline-flex;align-items:center;gap:8px;border:1.5px solid #E7E1D3;border-radius:100px;' +
+      'padding:10px 16px;font-family:Inter,Arial,sans-serif;font-size:.9rem;font-weight:600;color:#26271F;' +
+      'background:#fff;cursor:pointer;transition:all .15s ease;user-select:none}' +
+    '.on-dp-d:hover{border-color:#5B990A}' +
+    '.on-dp-d input{width:16px;height:16px;margin:0;accent-color:#5B990A;cursor:pointer}' +
+    '.on-dp-d.on-dp-on{background:#EEF4E2;border-color:#5B990A;color:#46760A}' +
+    '.on-dp-d.on-dp-lock{opacity:.72;cursor:default}' +
+    '.on-dp-d.on-dp-lock input{cursor:default}' +
+    '.on-dp-note{font-family:Inter,Arial,sans-serif;font-size:.8rem;color:#5E6157;margin-top:8px;line-height:1.45}' +
+    '.on-dp-other{margin-top:10px;display:none}' +
+    '.on-dp-other.on-dp-show{display:block}' +
     // hero rotator strip (homepage): inline-grid stacks every word in one cell, so the
     // strip is sized by the longest word and nothing shifts as it cycles
     '.on-rot{background:#FAF6EE;border-bottom:1px solid #E7E1D3;overflow:hidden}' +
@@ -364,6 +389,125 @@
     }
     if (clsSel && schSel) { clsSel.addEventListener('change', rebuildSched); rebuildSched(); }
 
+    // ---- application: Preferred Days becomes five day checkboxes (Roberta, 2026-08-20) ----
+    // The sheet stores days as five booleans (School Year Registrations G-K). A free-text box meant
+    // Heather read prose and ticked five boxes by hand on every application. Checkboxes map 1:1.
+    // Deliberately NOT a stricter schedule dropdown: three enrolled children are on patterns the
+    // Schedule list cannot express (Niall Tue/Wed/Thu, Aalisiya Wed/Thu/Fri, Rosie Mon-Thurs in
+    // Toddler, which has no 4-morning option at all). Hence the Other box.
+    var pdInput = appForm ? appForm.querySelector('input[name="Preferred Days"]') : null;
+    if (pdInput && !appForm.querySelector('.on-dp')) {
+      var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      var pdField = pdInput.closest('.on-ff, .on-ff-full, .on11-full') || pdInput.parentNode;
+      pdInput.type = 'hidden';                 // keep it: it is what actually posts
+      pdInput.setAttribute('data-nostore', '1');
+
+      var wrap = document.createElement('div');
+      wrap.className = 'on-dp';
+      var row = document.createElement('div');
+      row.className = 'on-dp-row';
+      var boxes = DAYS.map(function (d) {
+        var lab = document.createElement('label');
+        lab.className = 'on-dp-d';
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.setAttribute('data-day', d);
+        cb.setAttribute('data-nostore', '1');   // no name, so it never posts on its own
+        lab.appendChild(cb);
+        lab.appendChild(document.createTextNode(d));
+        row.appendChild(lab);
+        return { cb: cb, lab: lab, d: d };
+      });
+
+      var oLab = document.createElement('label');
+      oLab.className = 'on-dp-d';
+      var oCb = document.createElement('input');
+      oCb.type = 'checkbox';
+      oCb.setAttribute('data-other', '1');
+      oCb.setAttribute('data-nostore', '1');
+      oLab.appendChild(oCb);
+      oLab.appendChild(document.createTextNode('Other'));
+      row.appendChild(oLab);
+
+      var note = document.createElement('div');
+      note.className = 'on-dp-note';
+      var oWrap = document.createElement('div');
+      oWrap.className = 'on-dp-other';
+      var oTxt = document.createElement('input');
+      oTxt.type = 'text';
+      oTxt.className = 'on-fi';
+      oTxt.setAttribute('data-other-text', '1');
+      oTxt.setAttribute('data-nostore', '1');
+      oTxt.placeholder = 'Tell us the days you would like';
+      oWrap.appendChild(oTxt);
+
+      wrap.appendChild(row);
+      wrap.appendChild(note);
+      wrap.appendChild(oWrap);
+      pdField.appendChild(wrap);
+
+      // what the chosen schedule implies: how many days, and whether the days are fixed
+      function schedSpec() {
+        var v = schSel ? (schSel.value || '') : '';
+        if (!v) return { n: 0, fixed: null };
+        if (/Tue\s*&\s*Thu/i.test(v)) return { n: 2, fixed: ['Tue', 'Thu'] };
+        if (/Mon\/Wed\/Fri/i.test(v)) return { n: 3, fixed: ['Mon', 'Wed', 'Fri'] };
+        if (/^5 mornings/i.test(v) || /Extended day/i.test(v)) return { n: 5, fixed: DAYS.slice() };
+        var m = v.match(/^(\d)/);
+        return { n: m ? parseInt(m[1], 10) : 0, fixed: null };
+      }
+
+      function compose() {
+        var picked = boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.d; });
+        var out = picked.length === 5 ? 'Mon-Fri' : picked.join('/');
+        if (oCb.checked && oTxt.value.trim()) out = (out ? out + ' \u00b7 ' : '') + 'Other: ' + oTxt.value.trim();
+        pdInput.value = out;
+      }
+
+      function paint() {
+        var spec = schedSpec();
+        boxes.forEach(function (b) {
+          var locked = !!spec.fixed;
+          if (locked) b.cb.checked = spec.fixed.indexOf(b.d) !== -1;
+          b.cb.disabled = locked;
+          b.lab.classList.toggle('on-dp-lock', locked);
+          b.lab.classList.toggle('on-dp-on', b.cb.checked);
+        });
+        oLab.classList.toggle('on-dp-on', oCb.checked);
+        oWrap.classList.toggle('on-dp-show', oCb.checked);
+        if (spec.fixed) {
+          note.textContent = 'These days are set by the schedule you chose. If you need something different, tick Other.';
+        } else if (spec.n) {
+          var got = boxes.filter(function (b) { return b.cb.checked; }).length;
+          note.textContent = 'Choose ' + spec.n + ' day' + (spec.n === 1 ? '' : 's') + '. ' + got + ' selected.';
+        } else {
+          note.textContent = 'Choose your schedule above first.';
+        }
+        compose();
+      }
+
+      boxes.forEach(function (b) { b.cb.addEventListener('change', function () { clearErr(pdInput); paint(); }); });
+      oCb.addEventListener('change', function () { clearErr(pdInput); paint(); if (oCb.checked) oTxt.focus(); });
+      oTxt.addEventListener('input', compose);
+      if (schSel) schSel.addEventListener('change', paint);
+      if (clsSel) clsSel.addEventListener('change', function () { setTimeout(paint, 0); });
+      paint();
+
+      // validation runs off the hidden input, so the error lands under the picker
+      appForm.setAttribute('data-dp', '1');
+      appForm.__dpCheck = function () {
+        var spec = schedSpec();
+        var got = boxes.filter(function (b) { return b.cb.checked; }).length;
+        if (oCb.checked) {
+          if (!oTxt.value.trim()) return 'Tell us which days you would like';
+          return null;                                   // Other is a request, not a fixed schedule
+        }
+        if (!spec.n) return null;                        // no schedule chosen yet, Schedule is required anyway
+        if (got !== spec.n) return 'You chose ' + spec.n + ' mornings but picked ' + got + ' day' + (got === 1 ? '' : 's');
+        return null;
+      };
+    }
+
     // ---- per-form confirmation routing (Heather batch 3): where to send people after a successful submit ----
     function afterSubmit(fname) {
       var q = null;
@@ -613,6 +757,22 @@
             if (digits.length < 10 || digits.length > 15) { err(el, 'Please enter a valid phone number'); bad.push(el); ok = false; }
           }
         });
+        if (f.getAttribute('data-dp') && typeof f.__dpCheck === 'function') {
+          var dpMsg = f.__dpCheck();
+          var dpInput = f.querySelector('input[name="Preferred Days"]');
+          if (dpMsg && dpInput) {
+            var dpHost = dpInput.closest('.on-ff, .on-ff-full, .on11-full') || dpInput.parentNode;
+            var dpErr = dpHost.querySelector('.on-ferr');
+            if (!dpErr) {
+              dpErr = document.createElement('div');
+              dpErr.className = 'on-ferr';
+              dpErr.style.cssText = 'color:#C8744E;font-size:.8rem;font-weight:600;margin-top:6px;font-family:Inter,Arial,sans-serif';
+              dpHost.appendChild(dpErr);
+            }
+            dpErr.textContent = dpMsg;
+            ok = false; bad.push('Preferred days');
+          }
+        }
         e.preventDefault(); e.stopImmediatePropagation();
         summarise(f, bad);
         if (!ok) {
