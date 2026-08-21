@@ -1,6 +1,9 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.9.4 (2026-08-20, Roberta): the homepage contact block led with the Parent Handbook. Heading is
+   now "Have a question or want to book a tour?", and the sub-line under it leads with the tour as
+   well rather than opening on the handbook. Handbook is still offered, just second.
    v1.9.3 (2026-08-20, Roberta): Phone is REQUIRED on every lead form. The home page form had
    been softened to "Phone (optional)" for conversion; an enquiry arrived that same evening with
    no number, which is a lead Heather cannot ring. Phone is now set required in JS on every
@@ -189,6 +192,24 @@
     nr.name = 'robots'; nr.content = 'noindex, nofollow';
     document.head.appendChild(nr);
   }
+
+  // ---- homepage: contact block leads with the tour, not the handbook (Roberta, 2026-08-20) ----
+  // Same immediate-run reasoning as the block below: this script is the last element in <body>,
+  // so the nodes exist and the swap lands before first paint.
+  (function () {
+    document.querySelectorAll('h2.on-h2c').forEach(function (h) {
+      if (/Have a question or want our Parent Handbook\?/i.test((h.textContent || '').trim())) {
+        h.textContent = 'Have a question or want to book a tour?';
+        // the sub-line under it still led with the handbook, which reads oddly under a tour heading
+        var box = h.parentNode;
+        var sub = box && box.querySelector('p.on-mut');
+        if (sub && /Parent Handbook/i.test(sub.textContent || '')) {
+          sub.textContent = "Leave your details and we'll set up a tour. We'll send the Parent "
+            + "Handbook too, and answer anything you're wondering about.";
+        }
+      }
+    });
+  })();
 
   // ---- homepage: Our Programs copy + enrichment rotator under the hero (Roberta, 2026-08-20) ----
   // Runs immediately (this script is the last element in <body>, so the nodes already exist and
