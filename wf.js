@@ -1,6 +1,21 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.13.0 (2026-08-22, Roberta) — LEAD THANK-YOU. Tours are booked by a person, not a calendar,
+   so the page now says so: "Heather, our Head of School, will be in touch to arrange a tour."
+   It also gains a second, quieter CTA to /how-to-enrol, so a decided family is not left waiting
+   on a human before they can act.
+   v1.12.0 (2026-08-22, Roberta) — AD ATTRIBUTION CAPTURE. Every form was posting with no record
+   of where the visitor came from, so a lead arriving from a Meta ad was indistinguishable from one
+   that walked in off Google. That cannot be backfilled: once a visit is over, the click id is gone.
+   Now captured on first page view, kept in localStorage for 90 days (FIRST touch wins, so browsing
+   the site before enquiring does not wipe the ad click), and posted with every form as:
+     fbc · fbp · utm_source · utm_medium · utm_campaign · utm_content · utm_term · landing_page
+   fbc/fbp are what Meta's Conversions API needs to match a server event back to an ad click, so this
+   is also the prerequisite for sending enrolments back to Meta later.
+   These ride along in the existing fields[...] payload, so they land in the Form Submissions tab's
+   Payload JSON column with no change needed in Make or the workbook. The whole thing is wrapped in
+   try/catch and appended last: if attribution ever throws, the form still submits normally.
    v1.11.0 (2026-08-21, Roberta) — META PIXEL INSTALLED HERE. The site had no pixel at all, and
    Webflow's custom-code head is not reachable from tooling right now, so the base pixel is loaded
    from this file instead. wf.js is on every page via the footer script tag, so coverage is complete;
@@ -101,6 +116,69 @@
     window.fbq('init', '1372762647822184');
     window.fbq('track', 'PageView');
   } catch (e) { /* never let the pixel break the site */ }
+
+  // ---- ad attribution capture (v1.12.0) ----
+  // First touch wins. Nothing here may ever throw into the page.
+  var ON_ATTR = (function () {
+    var KEY = 'on_attr_v1', MAXAGE = 90 * 24 * 60 * 60 * 1000;
+    function cookie(n) {
+      try {
+        var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+        return m ? m.pop() : '';
+      } catch (e) { return ''; }
+    }
+    function load() {
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (!raw) return null;
+        var o = JSON.parse(raw);
+        return (o && o.t && (Date.now() - o.t) < MAXAGE) ? o : null;
+      } catch (e) { return null; }
+    }
+    try {
+      var q = new URLSearchParams(location.search);
+      var saved = load();
+      if (!saved) {
+        // fbc: use Meta's cookie if it exists, otherwise build it from fbclid in the URL
+        var fbclid = q.get('fbclid') || '';
+        var fbc = cookie('_fbc') || (fbclid ? 'fb.1.' + Date.now() + '.' + fbclid : '');
+        var o = { t: Date.now(), fbc: fbc, fbp: cookie('_fbp'), landing_page: location.href.slice(0, 500) };
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (k) {
+          o[k] = q.get(k) || '';
+        });
+        // only persist a visit that actually carries attribution, so a direct visit
+        // does not lock in an empty record and block a later ad click
+        if (o.fbc || o.fbp || o.utm_source) {
+          try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { }
+          saved = o;
+        } else {
+          saved = o;
+        }
+      }
+      return saved || {};
+    } catch (e) { return {}; }
+  })();
+
+  function onAttrFields() {
+    var out = [];
+    try {
+      var a = ON_ATTR || {};
+      // re-read the cookies at submit time: the pixel sets _fbp asynchronously and may
+      // not have existed when the page first loaded
+      var late = (function (n) {
+        try {
+          var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+          return m ? m.pop() : '';
+        } catch (e) { return ''; }
+      });
+      var fbc = a.fbc || late('_fbc'), fbp = a.fbp || late('_fbp');
+      if (fbc) out.push(['fbc', fbc]);
+      if (fbp) out.push(['fbp', fbp]);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'landing_page']
+        .forEach(function (k) { if (a[k]) out.push([k, a[k]]); });
+    } catch (e) { }
+    return out;
+  }
   // ---- mobile hamburger ----
   document.addEventListener('click', function (e) {
     var hb = e.target.closest('.on-hb');
@@ -867,6 +945,8 @@
           if (el.type === 'checkbox') { fd.append('fields[' + el.name + ']', el.checked ? 'Yes' : 'No'); return; }
           fd.append('fields[' + el.name + ']', el.value);
         });
+        // attribution rides along last, and can never block a submission
+        try { onAttrFields().forEach(function (kv) { fd.append('fields[' + kv[0] + ']', kv[1]); }); } catch (e) { }
         var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
         function finish(good) {
           if (btn) { btn.value = orig; btn.disabled = false; }
@@ -1323,6 +1403,22 @@
       function setBtn(href, label) {
         if (tBtns[0]) { tBtns[0].setAttribute('href', href); tBtns[0].textContent = label; }
       }
+      // v1.13.0: a second, quieter CTA. Reuses the band's second anchor when the markup has
+      // one, otherwise clones the first, so this works on every thank-you variant.
+      function setBtn2(href, label) {
+        try {
+          var b = tBtns[1];
+          if (!b && tBtns[0] && tBtns[0].parentNode) {
+            b = tBtns[0].cloneNode(true);
+            b.className = (tBtns[0].className || '') + ' on-btn2';
+            b.style.background = 'transparent';
+            b.style.border = '2px solid currentColor';
+            b.style.marginLeft = '12px';
+            tBtns[0].parentNode.appendChild(b);
+          }
+          if (b) { b.setAttribute('href', href); b.textContent = label; b.style.display = ''; }
+        } catch (e) { }
+      }
       var TLDR = {
         toddler: {
           card: 'Toddler Class at a glance',
@@ -1357,16 +1453,18 @@
       if (tForm === 'lead') {
         var tp = TLDR[tqp.get('topic')];
         if (tHead) tHead.textContent = 'Thanks — your message is on its way!';
-        if (tSub) tSub.textContent = 'We’ll get back to you as soon as we can.';
+        if (tSub) tSub.textContent = 'Heather, our Head of School, will be in touch to arrange a tour.';
         if (tp) {
           if (tCard) tCard.textContent = tp.card;
           setList(tp.items);
           if (tNote) tNote.innerHTML = FEE_LINE;
           setBtn(tp.btn[0], tp.btn[1]);
+          setBtn2('/how-to-enrol', 'Ready now? Start an application');
         } else {
           if (tCardBox) tCardBox.style.display = 'none';
           if (tNote) tNote.innerHTML = 'Questions in the meantime? Email ' + HEATHER + ' or call 416 960 1293.';
           setBtn('/', 'Oriole home');
+          setBtn2('/how-to-enrol', 'Ready now? Start an application');
         }
       } else if (tForm === 'application' || tForm === 'appfee') {
         // 'appfee' = returning from Stripe. A separate value, not a flag on 'application',
