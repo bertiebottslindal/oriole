@@ -1,6 +1,11 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.15.0 (2026-08-23, Roberta) — CAPI DEDUPLICATION. Every submission now carries one event id,
+   sent to the backend as fields[event_id] and to the pixel as eventID on the thank-you page, so a
+   matching server-side event from Make is counted once, not twice. Also fires a real standard Lead
+   event instead of relying only on the URL-rule custom conversion, which has no id to match on.
+
    v1.14.0 (2026-08-23, Roberta) — PIXEL YIELDS TO THE HEAD. Measured on a throttled mobile
    connection the pixel fired at 13.7s because it sits behind this 93 KB file; in the head it
    fires at ~0.8s. Meta was missing ~82% of ad clicks (84 clicks -> 15 landing page views).
@@ -170,6 +175,17 @@
       return saved || {};
     } catch (e) { return {}; }
   })();
+
+  // ---- CAPI deduplication (v1.15.0) ----
+  // One id per submission, sent BOTH to the browser pixel (as eventID on the thank-you page) and to
+  // the backend (as fields[event_id]) so Make can send the same id server-side. Meta then counts the
+  // browser event and the server event as ONE. Carried through the redirect in the URL rather than
+  // sessionStorage, because in-app browsers have already proven unreliable for storage here.
+  var ON_LAST_EVID = '';
+  function onNewEventId() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) { }
+    return 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
 
   function onAttrFields() {
     var out = [];
@@ -674,7 +690,7 @@
           'Home Lead Form': 'general', 'Toddler Lead Form': 'toddler', 'Junior Lead Form': 'junior',
           'Senior Lead Form': 'senior', 'Summer Camp Lead Form': 'camp'
         }[fname] || 'general';
-        q = 'form=lead&topic=' + topic;
+        q = 'form=lead&topic=' + topic + (ON_LAST_EVID ? '&eid=' + encodeURIComponent(ON_LAST_EVID) : '');
       } else if (fname === 'Application 2026-2027') {
         var _cf = document.querySelector('[name="Child First Name"]');
         var _cl = document.querySelector('[name="Child Last Name"]');
@@ -959,6 +975,7 @@
         });
         // attribution rides along last, and can never block a submission
         try { onAttrFields().forEach(function (kv) { fd.append('fields[' + kv[0] + ']', kv[1]); }); } catch (e) { }
+        try { ON_LAST_EVID = onNewEventId(); fd.append('fields[event_id]', ON_LAST_EVID); } catch (e) { }
         var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
         function finish(good) {
           if (btn) { btn.value = orig; btn.disabled = false; }
@@ -1394,6 +1411,14 @@
     // ---- /thank-you: dynamic confirmation page for every form (Heather batch 3) ----
     if (location.pathname === '/thank-you' && confList) {
       var tqp = new URLSearchParams(location.search);
+      // v1.15.0: real standard Lead event, deduplicated with the server event by eventID.
+      // This runs ALONGSIDE the existing URL-rule custom conversion, which keeps working untouched.
+      try {
+        var _eid = tqp.get('eid');
+        if (_eid && (tqp.get('form') || '') === 'lead' && window.fbq) {
+          window.fbq('track', 'Lead', { content_name: tqp.get('topic') || 'general' }, { eventID: _eid });
+        }
+      } catch (e) { /* tracking must never break the page */ }
       var tEye = document.querySelector('.on19-hero .on-eyebrow');
       if (tEye && (tqp.get('form') || '') !== 'camp') tEye.textContent = 'Oriole Nursery School';
       var tHead = document.getElementById('conf-heading');
