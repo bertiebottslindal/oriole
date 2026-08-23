@@ -1,6 +1,12 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.14.0 (2026-08-23, Roberta) — PIXEL YIELDS TO THE HEAD. Measured on a throttled mobile
+   connection the pixel fired at 13.7s because it sits behind this 93 KB file; in the head it
+   fires at ~0.8s. Meta was missing ~82% of ad clicks (84 clicks -> 15 landing page views).
+   This block now runs ONLY if no pixel exists yet, so the head snippet can be pasted at any
+   time with no double-counting and no gap. Once it is in the head, delete this block.
+
    v1.13.0 (2026-08-22, Roberta) — LEAD THANK-YOU. Tours are booked by a person, not a calendar,
    so the page now says so: "Heather, our Head of School, will be in touch to arrange a tour."
    It also gains a second, quieter CTA to /how-to-enrol, so a decided family is not left waiting
@@ -102,8 +108,9 @@
 (function () {
   var T0 = Date.now();
 
-  // ---- Meta pixel (v1.11.0) · dataset 1372762647822184 "Oriole Website" ----
+  // ---- Meta pixel (v1.11.0, guarded v1.14.0) · dataset 1372762647822184 "Oriole Website" ----
   // See the header note before adding this anywhere else on the site.
+  var ON_PIXEL_ALREADY = !!window.fbq;   // true when the head snippet is present
   (function (f, b, e, v, n, t, s) {
     if (f.fbq) return;                       // already initialised — never init twice
     n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
@@ -113,8 +120,13 @@
     s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
   })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
   try {
-    window.fbq('init', '1372762647822184');
-    window.fbq('track', 'PageView');
+    // v1.14.0: only initialise if nothing else already has. Once the base code is pasted into the
+    // Webflow head (where it belongs, and where it fires in ~700ms instead of ~14s on mobile), this
+    // whole block becomes a no-op and there is no double-counting and no ordering risk either way.
+    if (!ON_PIXEL_ALREADY) {
+      window.fbq('init', '1372762647822184');
+      window.fbq('track', 'PageView');
+    }
   } catch (e) { /* never let the pixel break the site */ }
 
   // ---- ad attribution capture (v1.12.0) ----
