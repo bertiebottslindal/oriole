@@ -1,6 +1,7 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.15.1 (2026-08-23, Roberta) — adds client_user_agent to the submission for CAPI.
    v1.15.0 (2026-08-23, Roberta) — CAPI DEDUPLICATION. Every submission now carries one event id,
    sent to the backend as fields[event_id] and to the pixel as eventID on the thank-you page, so a
    matching server-side event from Make is counted once, not twice. Also fires a real standard Lead
@@ -976,6 +977,9 @@
         // attribution rides along last, and can never block a submission
         try { onAttrFields().forEach(function (kv) { fd.append('fields[' + kv[0] + ']', kv[1]); }); } catch (e) { }
         try { ON_LAST_EVID = onNewEventId(); fd.append('fields[event_id]', ON_LAST_EVID); } catch (e) { }
+        // Meta requires client_user_agent on server events with action_source 'website'.
+        // The visitor's IP is not knowable from the browser, so email + phone carry the match instead.
+        try { fd.append('fields[client_user_agent]', navigator.userAgent || ''); } catch (e) { }
         var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
         function finish(good) {
           if (btn) { btn.value = orig; btn.disabled = false; }
