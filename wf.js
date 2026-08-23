@@ -1,6 +1,11 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.16.0 (2026-08-23, Roberta) — CAMP LEADS SPLIT OFF. 1.15.0 fired a standard Lead for every lead
+   form, camp included, which would have polluted the school-year optimisation event. Camp enquiries
+   now fire a CampLead custom event instead, matching the exclusion the School Lead custom conversion
+   has always had (URL does not contain topic=camp).
+
    v1.15.1 (2026-08-23, Roberta) — adds client_user_agent to the submission for CAPI.
    v1.15.0 (2026-08-23, Roberta) — CAPI DEDUPLICATION. Every submission now carries one event id,
    sent to the backend as fields[event_id] and to the pixel as eventID on the thank-you page, so a
@@ -1419,8 +1424,15 @@
       // This runs ALONGSIDE the existing URL-rule custom conversion, which keeps working untouched.
       try {
         var _eid = tqp.get('eid');
+        var _topic = tqp.get('topic') || 'general';
         if (_eid && (tqp.get('form') || '') === 'lead' && window.fbq) {
-          window.fbq('track', 'Lead', { content_name: tqp.get('topic') || 'general' }, { eventID: _eid });
+          // Camp enquiries are a DIFFERENT funnel and must not feed the school-year optimisation
+          // event, exactly as the School Lead custom conversion already excludes topic=camp.
+          if (_topic === 'camp') {
+            window.fbq('trackCustom', 'CampLead', { content_name: 'camp' }, { eventID: _eid });
+          } else {
+            window.fbq('track', 'Lead', { content_name: _topic }, { eventID: _eid });
+          }
         }
       } catch (e) { /* tracking must never break the page */ }
       var tEye = document.querySelector('.on19-hero .on-eyebrow');
