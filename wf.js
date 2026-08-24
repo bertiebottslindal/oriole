@@ -1,6 +1,13 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.17.0 (2026-08-23, Roberta) — SPAM-GATED SUBMISSIONS NO LONGER FIRE CONVERSIONS. The event id
+   was assigned before the spam gate, and a gated submission still called finish(true), which
+   redirected to /thank-you?form=lead&eid=... That URL fires BOTH the School Lead custom conversion
+   (a PageView URL rule) and the standard Lead pixel event, so every discarded bot submission was
+   teaching Meta to find more bots. Gated submissions now finish silently on the page: no redirect,
+   no thank-you PageView, no Lead, no School Lead. Who gets gated is unchanged.
+
    v1.16.0 (2026-08-23, Roberta) — CAMP LEADS SPLIT OFF. 1.15.0 fired a standard Lead for every lead
    form, camp included, which would have polluted the school-year optimisation event. Camp enquiries
    now fire a CampLead custom event instead, matching the exclusion the School Lead custom conversion
@@ -986,13 +993,16 @@
         // The visitor's IP is not knowable from the browser, so email + phone carry the match instead.
         try { fd.append('fields[client_user_agent]', navigator.userAgent || ''); } catch (e) { }
         var url = 'https://webflow.com/api/v1/form/' + document.documentElement.getAttribute('data-wf-site');
-        function finish(good) {
+        function finish(good, silent) {
           if (btn) { btn.value = orig; btn.disabled = false; }
           if (good) {
             var fname = f.getAttribute('data-name') || '';
             if (STORE_KEY) { store.done[fname] = 1; saveState(STORE_KEY, store); }
             if (updateCampUI) updateCampUI();
-            if (afterSubmit(fname)) return;
+            // v1.17.0: a spam-gated submission must never reach /thank-you. That URL fires the
+            // School Lead custom conversion AND the standard Lead pixel event, so a discarded bot
+            // submission was training delivery on bots. Silent finishes stay on the page.
+            if (!silent && afterSubmit(fname)) return;
             f.style.display = 'none';
             var d = w.querySelector('.w-form-done');
             if (d) d.style.display = 'block';
@@ -1017,7 +1027,8 @@
         var isLead = /Lead Form$/.test(f.getAttribute('data-name') || '');
         var untouched = isLead && touched.indexOf(f) === -1;
         if ((hpEl && (hpEl.value || '').trim() !== '') || untouched) {
-          setTimeout(function () { finish(true); }, 600);
+          try { ON_LAST_EVID = ''; } catch (e) { }
+          setTimeout(function () { finish(true, true); }, 600);
           return;
         }
         post().then(function (r) {
