@@ -1,6 +1,23 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.18.0 (2026-08-24, Roberta) — APPLICATION FEE IS NOW PAYABLE, EMBEDDED IN THE PAGE.
+   /how-to-enrol has promised "You'll be taken to secure checkout to pay the $150 application fee"
+   since v1.10.0, but APP_FEE_LINK was never filled, so the thank-you page fell back to "we'll email
+   you payment options". Every applicant since 2026-08-21 hit that. Now: the pay band on
+   /thank-you?form=application mounts Stripe Checkout INSIDE the page.
+   Why embedded rather than a Stripe Payment Link: the session is created server-side by Make
+   (same webhook as camp, discriminated by kind=application_fee), so it carries
+   metadata[child] / [school_year] / [kind]. A payment link carries none of those, and the back office
+   keys Total paid on the child's name EXACTLY — a blank name reconciles to nobody. The router's
+   NON-CAMP route reads that metadata and writes a correctly typed Payments row with no phantom
+   camp registration.
+   ⚠️ Stripe retired ui_mode 'embedded' in favour of 'embedded_page', and the matching JS is
+   createEmbeddedCheckoutPage() from js.stripe.com/dahlia/stripe.js — NOT initEmbeddedCheckout() and
+   NOT /v3/. Both were verified against the live API and the current docs, not assumed.
+   School year defaults to 2026/27 on the session; Heather can change it per row from the School year
+   dropdown on the Payments tab. Every failure path (stripe.js blocked, hook down, no client_secret)
+   restores the button and points at e-transfer, so a broken card path never blocks an application.
    v1.17.0 (2026-08-23, Roberta) — SPAM-GATED SUBMISSIONS NO LONGER FIRE CONVERSIONS. The event id
    was assigned before the spam gate, and a gated submission still called finish(true), which
    redirected to /thank-you?form=lead&eid=... That URL fires BOTH the School Lead custom conversion
@@ -56,10 +73,7 @@
    never loses an application. Stripe returns to /thank-you?form=appfee, which renders the paid state. That is a
    DIFFERENT form value on purpose: if the paid page still matched form=application, Meta's
    SubmitApplication rule would fire a second time and double-count every application.
-   ⚠️ Two constants below must be filled before this does anything: APP_FEE_LINK (Stripe Payment Link)
-   and ETRANSFER_TO. While APP_FEE_LINK is empty the card button is hidden and only e-transfer shows;
-   while BOTH are empty the page falls back to the old "we'll email you payment options" wording, so
-   shipping this early is safe.
+   ✅ COMPLETED in v1.18.0 — both constants are filled and the card path is live (embedded, not a link).
    v1.9.4 (2026-08-20, Roberta): the homepage contact block led with the Parent Handbook. Heading is
    now "Have a question or want to book a tour?", and the sub-line under it leads with the tour as
    well rather than opening on the handbook. Handbook is still offered, just second.
@@ -1458,8 +1472,23 @@
       // ---- application fee payment (v1.10.0) ----
       // Flat $150 for every applicant. The 5% sibling discount applies to tuition, NOT the
       // application fee (Roberta, 2026-08-21) — so one price, one link, no discount logic.
-      var APP_FEE_LINK = '';   // TODO Stripe Payment Link, e.g. https://buy.stripe.com/xxxx
-      var ETRANSFER_TO = '';   // TODO e-transfer recipient, e.g. info@oriolenurseryschool.com
+      // v1.18.0: EMBEDDED Stripe checkout, not a payment link. The session is created server-side
+      // by Make (same webhook as camp, discriminated by kind=application_fee) so it can carry
+      // metadata[child]/[school_year]/[kind] — a bare payment link carries none of that, and the
+      // back office keys Total paid on the child's name EXACTLY.
+      // ⚠️ Stripe retired ui_mode 'embedded' for 'embedded_page'; the matching JS is
+      // createEmbeddedCheckoutPage() loaded from js.stripe.com/dahlia/stripe.js (NOT /v3/).
+      var APP_FEE_HOOK = 'https://hook.us2.make.com/i3h3pvb7c15mlgq89p7pcyqdhtlbjzl1';
+      var STRIPE_PK    = 'pk_live_51Tt6ieEQpj2yI86HWOJVnLfUp08VZuHPTCTjLmSr9zLDC0taAa3IJWuCAPuh47xaaGgiFe7Of4MJqcpQLKk92rsM00vCOWQzYz';
+      var ETRANSFER_TO = 'info@oriolenurseryschool.com';
+      function loadStripeJs(cb) {
+        if (window.Stripe) { cb(); return; }
+        var sc = document.createElement('script');
+        sc.src = 'https://js.stripe.com/dahlia/stripe.js';
+        sc.onload = cb;
+        sc.onerror = function () { cb(new Error('stripe.js failed')); };
+        document.head.appendChild(sc);
+      }
       var FEE_LINE = 'Full fee table, payment dates and policies: <a class="on19-link" href="/fee-schedule">Fee Schedule</a>. Questions? Email ' + HEATHER + '.';
       function setList(items) {
         confList.innerHTML = items.map(function (t) { return '<li class="on19-week">' + t + '</li>'; }).join('');
@@ -1534,7 +1563,7 @@
         // 'appfee' = returning from Stripe. A separate value, not a flag on 'application',
         // so the SubmitApplication and Purchase URL rules can never match the same page.
         var appPaid = tForm === 'appfee';
-        var canCard = !!APP_FEE_LINK, canEmt = !!ETRANSFER_TO;
+        var canCard = !!STRIPE_PK, canEmt = !!ETRANSFER_TO;
         if (tHead) tHead.textContent = appPaid
           ? 'Payment received — thank you!'
           : 'Application received — thank you!';
@@ -1572,7 +1601,9 @@
             pay.innerHTML = '<div class="on4-day-in"><div class="on-band">' +
               '<h2 class="on-h2w">The $150 application fee</h2>' +
               '<p class="on-band-p">One-time and non-refundable. Your application is already saved, so you can pay now or come back to this page later.</p>' +
-              cardBtn + emtLink +
+              cardBtn +
+              '<div id="app-pay-embed" style="display:none;margin:18px auto 0;max-width:640px;background:#fff;border-radius:10px;padding:6px"></div>' +
+              emtLink +
               '<div id="app-emt-box" style="display:none;margin:16px auto 0;max-width:540px;text-align:left;' +
                 'font-family:Inter,Arial,sans-serif;font-size:.95rem;color:#fff;line-height:1.5">' +
                 '<p style="margin:0 0 6px"><b>Interac e-transfer</b></p>' +
@@ -1591,16 +1622,41 @@
             var apBtn = document.getElementById('app-pay-btn');
             if (apBtn) apBtn.addEventListener('click', function (e) {
               e.preventDefault();
-              // hand Stripe what it needs to reconcile the payment to the application.
-              // client_reference_id only accepts letters, numbers, - and _ (200 max), so the
-              // child's name is slugged; the readable version rides along on the email.
-              var ref = ((tqp.get('child') || '') + '-' + (tqp.get('em') || ''))
-                .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 200);
-              var u = APP_FEE_LINK + (APP_FEE_LINK.indexOf('?') > -1 ? '&' : '?');
-              if (ref) u += 'client_reference_id=' + ref + '&';
-              var em = tqp.get('em');
-              u += em ? 'prefilled_email=' + encodeURIComponent(em) : '';
-              location.href = u.replace(/[?&]$/, '');
+              var box = document.getElementById('app-pay-embed');
+              function fail(msg) {
+                apBtn.textContent = 'Pay $150 by card';
+                apBtn.style.pointerEvents = '';
+                var w = document.createElement('p');
+                w.style.cssText = 'margin:12px 0 0;text-align:center;color:#fff;font-family:Inter,Arial,sans-serif;font-size:.9rem';
+                w.textContent = msg || 'Card payment isn\u2019t available right now \u2014 please use the e-transfer option below, or email us.';
+                if (box && box.parentNode && !document.getElementById('app-pay-warn')) { w.id = 'app-pay-warn'; box.parentNode.insertBefore(w, box); }
+              }
+              apBtn.textContent = 'One moment\u2026';
+              apBtn.style.pointerEvents = 'none';
+              loadStripeJs(function (err) {
+                if (err || !window.Stripe) { fail(); return; }
+                try {
+                  window.Stripe(STRIPE_PK).createEmbeddedCheckoutPage({
+                    fetchClientSecret: function () {
+                      var body = new URLSearchParams();
+                      body.append('kind', 'application_fee');
+                      body.append('email', tqp.get('em') || '');
+                      body.append('childName', tqp.get('child') || '');
+                      body.append('parentName', tqp.get('parent') || '');
+                      return fetch(APP_FEE_HOOK, { method: 'POST', body: body })
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) {
+                          if (!j || !j.client_secret) throw new Error('no client_secret');
+                          return j.client_secret;
+                        });
+                    }
+                  }).then(function (co) {
+                    if (box) { box.style.display = 'block'; }
+                    co.mount('#app-pay-embed');
+                    apBtn.style.display = 'none';
+                  }).catch(function () { fail(); });
+                } catch (e2) { fail(); }
+              });
             });
           }
         }
