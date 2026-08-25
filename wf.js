@@ -1690,8 +1690,10 @@
             var pay = document.createElement('div');
             pay.className = 'on-payband';
             pay.style.cssText = 'margin:0 0 30px';
-            pay.innerHTML = '<div class="on-band">' +
-              '<h2 class="on-h2w">The $150 application fee</h2>' +
+            // trimmed padding vs the sitewide .on-band: at full size the button lands within a
+            // few pixels of the fold on a 390x844 phone
+            pay.innerHTML = '<div class="on-band" style="margin-top:26px;padding:34px 24px">' +
+              '<h2 class="on-h2w" style="font-size:2rem">The $150 application fee</h2>' +
               '<p class="on-band-p">One-time and non-refundable. Your application is already saved, so you can pay now or come back to this page later.</p>' +
               cardBtn +
               '<div id="app-pay-embed" style="display:none;margin:18px auto 0;max-width:640px;background:#fff;border-radius:10px;padding:6px"></div>' +
