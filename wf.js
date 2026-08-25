@@ -1,6 +1,17 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.19.0 (2026-08-24, Roberta) — ONE-PARENT FAMILIES COULD NOT SUBMIT AN APPLICATION.
+   Every second-parent field was required in the Webflow markup, and v1.8.0 coerced the email and
+   phone ones to real type=email/tel, so the form's own hint ("enter N/A") was impossible to obey:
+   "2 answers are still needed — Second Parent Email, Second Parent Phone" with no way past it.
+   A tick box now clears, hides and un-requires the whole block, on the application form AND the
+   registration package (Parent 2 Name/Cell/Email/Best Contact were required there too). Same
+   release, /thank-you?form=application: the $150 pay band moves from below the fold to directly
+   under the headline, the headline says what is left to do, the e-transfer account is always
+   visible rather than behind a toggle, and the "card payment isn't available" warning can no
+   longer appear next to a mounted card form.
+
    v1.18.0 (2026-08-24, Roberta) — APPLICATION FEE IS NOW PAYABLE, EMBEDDED IN THE PAGE.
    /how-to-enrol has promised "You'll be taken to secure checkout to pay the $150 application fee"
    since v1.10.0, but APP_FEE_LINK was never filled, so the thank-you page fell back to "we'll email
@@ -882,6 +893,79 @@
       wr.appendChild(hp);
       f.appendChild(wr);
     });
+    // ---- one-parent families: the second-parent block must be skippable (Roberta, 2026-08-24) ----
+    // Every second-parent field was marked required in the Webflow markup, and v1.8.0 turned the
+    // email/phone ones into real type=email/tel - so the form's own hint ("enter N/A") became
+    // impossible to obey and a single-parent family could not submit AT ALL. A tick box now
+    // clears, hides and un-requires the whole block. The box deliberately carries NO name, so
+    // the posted payload keeps exactly the shape the Sheets bridge already reads.
+    function onOneParentOptOut(form, names, key, labelText) {
+      if (!form) return;
+      var els = [];
+      names.forEach(function (n) {
+        var el = form.querySelector('[name="' + n + '"]');
+        if (el) els.push(el);
+      });
+      if (!els.length) return;
+      var boxes = els.map(function (el) {
+        return el.closest('.on-ff, .on-ff-full, .on11-full, .on11-part') || el.parentNode;
+      });
+      els.forEach(function (el) { if (el.required) el.setAttribute('data-req', '1'); });
+      var wrap = document.createElement('div');
+      wrap.className = 'on11-full on-ck-nosec';
+      wrap.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin:4px 0 2px';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'on-ck-' + key;
+      cb.style.cssText = 'margin-top:4px;flex:0 0 auto';
+      var lab = document.createElement('label');
+      lab.setAttribute('for', cb.id);
+      lab.className = 'on-fl';
+      lab.style.cssText = 'font-weight:500;cursor:pointer;margin:0';
+      lab.textContent = labelText;
+      wrap.appendChild(cb);
+      wrap.appendChild(lab);
+      if (boxes[0] && boxes[0].parentNode) boxes[0].parentNode.insertBefore(wrap, boxes[0]);
+      function apply() {
+        els.forEach(function (el, i) {
+          if (cb.checked) {
+            el.value = '';
+            el.required = false;
+            clearErr(el);
+          } else if (el.getAttribute('data-req') === '1') {
+            el.required = true;
+          }
+          if (boxes[i]) boxes[i].style.display = cb.checked ? 'none' : '';
+        });
+        try { sessionStorage.setItem(key, cb.checked ? '1' : ''); } catch (e) { }
+      }
+      cb.addEventListener('change', apply);
+      // the form restores itself from session storage, so this has to restore too - otherwise a
+      // parent who navigates away and back is silently blocked again
+      try { cb.checked = sessionStorage.getItem(key) === '1'; } catch (e) { }
+      if (cb.checked) apply();
+    }
+    // a fault here must never take the submit handler down with it
+    try {
+      onOneParentOptOut(appForm,
+        ['Second Parent Name', 'Second Parent Relationship', 'Second Parent Email', 'Second Parent Phone'],
+        'on_app_nosecond',
+        'There is only one parent or guardian on this application.');
+      onOneParentOptOut(document.querySelector('form[data-name="Registration Package"]'),
+        ['Parent 2 Name', 'Parent 2 Home Phone', 'Parent 2 Cell', 'Parent 2 Email', 'Parent 2 Best Contact'],
+        'on_reg_nosecond',
+        'There is only one parent or guardian in this family.');
+      // the old copy told parents to type N/A, which the email/phone format checks then rejected
+      document.querySelectorAll('.on-form .on11-hint').forEach(function (el) {
+        if (!/N\/A/i.test(el.textContent || '')) return;
+        el.textContent = 'We use this to address acceptance letters to both parents. If there is only '
+          + 'one parent or guardian, tick the box below and leave the rest blank.';
+      });
+      document.querySelectorAll('.on-form input[placeholder]').forEach(function (el) {
+        if (/N\/A/i.test(el.getAttribute('placeholder') || '')) el.setAttribute('placeholder', 'Full name');
+      });
+    } catch (e) { }
+
     // ---- required CWELCC acknowledgement on every lead form (Roberta, 2026-08-20) ----
     // Ad traffic will be sent at these forms, so the acknowledgement gates the lead rather
     // than sitting in fine print: unchecked = the submit is blocked and nothing is posted.
@@ -1566,11 +1650,13 @@
         var canCard = !!STRIPE_PK, canEmt = !!ETRANSFER_TO;
         if (tHead) tHead.textContent = appPaid
           ? 'Payment received — thank you!'
-          : 'Application received — thank you!';
+          : ((canCard || canEmt)
+              ? 'Application Received - Last Step: Pay Application Fee'
+              : 'Application received — thank you!');
         if (tSub) tSub.textContent = appPaid
           ? 'Your application and your $150 fee are both in. Our Registrar will be in touch about next steps.'
           : (canCard || canEmt
-              ? 'One last step: the $150 application fee. Our Registrar will be in touch about next steps.'
+              ? 'Your application is saved. Pay the $150 fee below to finish, then our Registrar will be in touch about next steps.'
               : 'Our Registrar will be in touch about next steps.');
         if (tCard) tCard.textContent = 'Your application';
         var tItems = [];
@@ -1579,7 +1665,7 @@
         tItems.push(appPaid
           ? '✓ $150 application fee paid'
           : (canCard || canEmt
-              ? 'A $150 non-refundable application fee is due — pay it below'
+              ? 'A $150 non-refundable application fee is due, payable above'
               : 'A $150 non-refundable application fee is due at submission — the Registrar will confirm payment details'));
         tItems.push('After acceptance: an $850 deposit is due four weeks after your acceptance letter');
         setList(tItems);
@@ -1589,46 +1675,51 @@
         // ---- payment band: card and/or e-transfer ----
         if (!appPaid && (canCard || canEmt)) {
           var aSec = document.querySelector('main section:last-of-type, section:last-of-type');
-          if (aSec) {
+          if (aSec || tCardBox) {
             var cardBtn = canCard
               ? '<div class="on-band-btns"><a class="on-btnl" id="app-pay-btn" href="#">Pay $150 by card</a></div>'
               : '';
-            var emtLink = canEmt
-              ? '<p style="margin:14px 0 0;text-align:center"><a href="#" id="app-emt-btn" style="color:#fff;text-decoration:underline;font-family:Inter,Arial,sans-serif;font-size:.9rem">' +
-                (canCard ? 'I’d rather send an e-transfer' : 'How to send your e-transfer') + '</a></p>'
+            // v1.19.0: the e-transfer details used to hide behind a toggle, so the account was
+            // invisible exactly when card payment failed and the warning said "use e-transfer below".
+            var emtLine = canEmt
+              ? '<p id="app-emt-box" style="margin:18px auto 0;max-width:560px;text-align:center;color:#fff;' +
+                'font-family:Inter,Arial,sans-serif;font-size:.92rem;line-height:1.55">' +
+                'Prefer an Interac e-transfer? Send <b>$150</b> to <b>' + ETRANSFER_TO + '</b> and put your ' +
+                'child’s full name in the message so we can match it to the application.</p>'
               : '';
-            var pay = document.createElement('section');
-            pay.innerHTML = '<div class="on4-day-in"><div class="on-band">' +
+            var pay = document.createElement('div');
+            pay.className = 'on-payband';
+            pay.style.cssText = 'margin:0 0 30px';
+            pay.innerHTML = '<div class="on-band">' +
               '<h2 class="on-h2w">The $150 application fee</h2>' +
               '<p class="on-band-p">One-time and non-refundable. Your application is already saved, so you can pay now or come back to this page later.</p>' +
               cardBtn +
               '<div id="app-pay-embed" style="display:none;margin:18px auto 0;max-width:640px;background:#fff;border-radius:10px;padding:6px"></div>' +
-              emtLink +
-              '<div id="app-emt-box" style="display:none;margin:16px auto 0;max-width:540px;text-align:left;' +
-                'font-family:Inter,Arial,sans-serif;font-size:.95rem;color:#fff;line-height:1.5">' +
-                '<p style="margin:0 0 6px"><b>Interac e-transfer</b></p>' +
-                '<p style="margin:0 0 6px">Send <b>$150</b> to <b>' + ETRANSFER_TO + '</b>.</p>' +
-                '<p style="margin:0">Please put your child’s full name in the message so we can match it to the application. ' +
-                'We’ll confirm by email once it arrives.</p></div>' +
-              '</div></div>';
-            aSec.parentNode.insertBefore(pay, aSec.nextSibling);
-
-            var emtBtn = document.getElementById('app-emt-btn');
-            if (emtBtn) emtBtn.addEventListener('click', function (e) {
-              e.preventDefault();
-              var box = document.getElementById('app-emt-box');
-              box.style.display = box.style.display === 'none' ? 'block' : 'none';
-            });
+              emtLine +
+              '</div>';
+            // v1.19.0: the band used to be appended after the LAST section, which on this page put
+            // the only real call to action a screen and a half below the fold. It now sits directly
+            // under the headline, above the summary card (Roberta, 2026-08-24).
+            if (tCardBox && tCardBox.parentNode) tCardBox.parentNode.insertBefore(pay, tCardBox);
+            else aSec.parentNode.insertBefore(pay, aSec.nextSibling);
             var apBtn = document.getElementById('app-pay-btn');
             if (apBtn) apBtn.addEventListener('click', function (e) {
               e.preventDefault();
               var box = document.getElementById('app-pay-embed');
+              // v1.19.0: mount success and the failure warning were not mutually exclusive, so a
+              // parent could be told card payment was unavailable while the card form sat right
+              // there. Nothing may contradict a mounted checkout.
+              var mounted = false;
               function fail(msg) {
+                if (mounted) return;
                 apBtn.textContent = 'Pay $150 by card';
                 apBtn.style.pointerEvents = '';
+                apBtn.style.display = '';
+                if (box) { box.innerHTML = ''; box.style.display = 'none'; }
                 var w = document.createElement('p');
-                w.style.cssText = 'margin:12px 0 0;text-align:center;color:#fff;font-family:Inter,Arial,sans-serif;font-size:.9rem';
-                w.textContent = msg || 'Card payment isn\u2019t available right now \u2014 please use the e-transfer option below, or email us.';
+                w.style.cssText = 'margin:12px 0 0;text-align:center;color:#fff;font-family:Inter,Arial,sans-serif;font-size:.9rem;line-height:1.55';
+                w.innerHTML = msg || ('Card payment isn\u2019t available right now. Please send $150 by Interac e-transfer to <b>'
+                  + ETRANSFER_TO + '</b> with your child\u2019s full name in the message, or email heather@oriolenurseryschool.com.');
                 if (box && box.parentNode && !document.getElementById('app-pay-warn')) { w.id = 'app-pay-warn'; box.parentNode.insertBefore(w, box); }
               }
               apBtn.textContent = 'One moment\u2026';
@@ -1653,7 +1744,10 @@
                   }).then(function (co) {
                     if (box) { box.style.display = 'block'; }
                     co.mount('#app-pay-embed');
+                    mounted = true;
                     apBtn.style.display = 'none';
+                    var stale = document.getElementById('app-pay-warn');
+                    if (stale) stale.remove();
                   }).catch(function () { fail(); });
                 } catch (e2) { fail(); }
               });
