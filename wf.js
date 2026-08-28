@@ -1,6 +1,23 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.21.0 (2026-08-28, Roberta) — PREFERRED START DATE ON THE APPLICATION + ANNOUNCEMENT BAR.
+   1. The application form never asked when a family wants to start, yet the Applications tab has
+   had a "Requested start" column since the Airtable build and the Seat Map is month-by-month —
+   the start date is what decides which seat a child actually takes. Heather has been reading it
+   out of the Message box. The form now asks, with a native type="date" picker (real calendar
+   popup on desktop, native wheel on mobile) limited to future dates, plus a one-tap chip for the
+   first day of school. It posts as "Requested Start" and maps to Applications > Requested start.
+   ⚠️ The input's own min= is ADVISORY. These forms carry novalidate and post through our own
+   handler, so the past-date guard in the submit listener is the only real enforcement. Keep both.
+   ⚠️ The bridge (Code.gs) must ship too or the value only reaches the raw Form Submissions log.
+   2. A site-wide announcement bar sits above the sticky header — "School starts Monday 14
+   September · Enrol now · limited spaces", linking to /how-to-enrol. It is a plain sibling before
+   .on-hd, so it scrolls away and the header still pins to top:0 untouched.
+   ⚠️ SELF-EXPIRING by design (AB_UNTIL). An urgency line nobody remembers to delete reads as a
+   dead site by mid-September — same reasoning as the auto-rolling camp week picker. To run a new
+   message change the constants; do not remove the expiry.
+
    v1.20.0 (2026-08-25, Roberta) — UNDER-18-MONTH ENQUIRIES SPLIT OUT OF THE SCHOOL-YEAR FUNNEL.
    Two of the first four paid leads picked Child Age "Under 18 months (for interest)". Those are
    real families but for a future school year, and every one of them was firing the standard Lead
@@ -366,10 +383,63 @@
     '.on-sum-m{color:#5E6157}' +
     '.on-ck-gate{background:#F6FAEF;border:1px solid #DCE9C7;border-radius:12px;padding:14px 16px;margin:16px 0 12px}' +
     '.on-ck-gate label{color:#3F4A35}' +
-    '.on-ck-link{color:#46760A;text-decoration:underline;font-weight:600}';
+    '.on-ck-link{color:#46760A;text-decoration:underline;font-weight:600}' +
+    // announcement bar: a plain sibling ABOVE the sticky header, so it scrolls away and the
+    // header still pins to top:0 on its own. Nothing about .on-hd is touched.
+    '.on-ab{background:#46760A;color:#FAF6EE;display:block;text-decoration:none}' +
+    '.on-ab-in{max-width:1180px;margin:0 auto;padding:9px 28px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;'
+      + 'font-family:Inter,Arial,sans-serif;font-size:.86rem;font-weight:600;letter-spacing:.01em;line-height:1.35;text-align:center}' +
+    '.on-ab-s{color:#B7D982;font-weight:400}' +
+    '.on-ab-cta{text-decoration:underline;text-underline-offset:3px}' +
+    '.on-ab:hover .on-ab-cta{color:#FFFFFF}' +
+    '@media (max-width:600px){.on-ab-in{padding:8px 18px;font-size:.79rem;gap:2px}.on-ab-s{display:none}.on-ab-in>span{flex:0 0 100%}}' +
+    // preferred start date: native date input (real calendar popup, native wheel on mobile)
+    '.on-sd-hint{font-family:Inter,Arial,sans-serif;font-size:.8rem;color:#5E6157;margin-top:6px;line-height:1.45}' +
+    '.on-sd-q{margin-top:8px}' +
+    '.on-sd-qb{font-family:Inter,Arial,sans-serif;font-size:.78rem;font-weight:600;color:#46760A;background:#F6FAEF;border:1px solid #DCE9C7;'
+      + 'border-radius:999px;padding:6px 12px;cursor:pointer;line-height:1}' +
+    '.on-sd-qb:hover{background:#EEF4E2;border-color:#5B990A}';
   var st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
+
+  // ---- site-wide announcement bar (Roberta, 2026-08-28) ----
+  // Sits as a plain sibling BEFORE the sticky header, so it scrolls away on first scroll and
+  // .on-hd keeps pinning to top:0 with no CSS change to the header at all.
+  // ⚠️ SELF-EXPIRING ON PURPOSE. Same reasoning as the camp week picker: a hard-coded urgency
+  // line that nobody remembers to delete reads as a dead site by mid-September. AB_UNTIL is the
+  // last day it shows; after that the bar simply never renders. To run a new message, change the
+  // three constants — do not remove the expiry.
+  (function () {
+    var AB_UNTIL = '2026-09-14';   // inclusive; the first day of school
+    var AB_TEXT = 'School starts Monday 14 September';
+    var AB_CTA = 'Enrol now \u00b7 limited spaces';
+    var AB_HREF = '/how-to-enrol';
+    try {
+      var now = new Date();
+      var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (today > new Date(AB_UNTIL + 'T12:00:00')) return;
+    } catch (e) { return; }          // a broken clock must never leave a bar stuck on the site
+    var hd = document.querySelector('.on-hd');
+    if (!hd || !hd.parentNode || document.querySelector('.on-ab')) return;
+    var a = document.createElement('a');
+    a.className = 'on-ab';
+    a.href = AB_HREF;
+    a.setAttribute('aria-label', AB_TEXT + '. ' + AB_CTA);
+    var inn = document.createElement('div');
+    inn.className = 'on-ab-in';
+    var t = document.createElement('span');
+    t.textContent = AB_TEXT;
+    var sep = document.createElement('span');
+    sep.className = 'on-ab-s';
+    sep.textContent = '\u00b7';
+    var c = document.createElement('span');
+    c.className = 'on-ab-cta';
+    c.textContent = AB_CTA;
+    inn.appendChild(t); inn.appendChild(sep); inn.appendChild(c);
+    a.appendChild(inn);
+    hd.parentNode.insertBefore(a, hd);
+  })();
 
   // ---- favicon + webclip (site settings favicon is UI-only) ----
   (function () {
@@ -614,6 +684,72 @@
       schSel.value = back || '';
     }
     if (clsSel && schSel) { clsSel.addEventListener('change', rebuildSched); rebuildSched(); }
+
+    // ---- application: preferred start date, native calendar picker (Roberta, 2026-08-28) ----
+    // The Applications tab has carried a "Requested start" column since the Airtable build and
+    // nothing has ever filled it — the form never asked. Heather has been inferring a start date
+    // from the Message box, and the Seat Map is month-by-month, so the start date is what decides
+    // which seat a child actually takes.
+    // type="date" is deliberate over a hand-built calendar: it is a real popup on desktop and the
+    // native wheel on iOS/Android, it cannot produce a malformed value, and it costs no code.
+    // ⚠️ min= is ADVISORY ONLY here. These forms carry novalidate and submit through our own
+    // handler, so the browser never enforces it — the past-date guard in the submit listener is
+    // what actually holds. Do not delete one and keep the other.
+    // Range runs three school years out on purpose: three of the six applications on file are
+    // early ones for 2027-09 or 2028, each with the $150 fee paid.
+    var pdHost = appForm ? appForm.querySelector('input[name="Preferred Days"]') : null;
+    if (appForm && pdHost && !appForm.querySelector('input[name="Requested Start"]')) {
+      var sdField = document.createElement('div');
+      sdField.className = 'on-ff';
+      var sdLab = document.createElement('label');
+      sdLab.className = 'on-fl';
+      sdLab.textContent = 'Preferred start date *';
+      var sd = document.createElement('input');
+      sd.className = 'on-fi w-input';
+      sd.type = 'date';
+      sd.name = 'Requested Start';
+      sd.setAttribute('data-name', 'Requested Start');
+      sd.required = true;
+      // Safari on very old macOS and a handful of others fall back to type="text". Detect by
+      // reading the type back, and give those visitors a format hint instead of a silent trap.
+      var native = sd.type === 'date';
+      if (!native) { sd.placeholder = 'YYYY-MM-DD'; }
+      function isoOf(dt) {
+        return dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2);
+      }
+      var tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+      sd.min = isoOf(tmr);                       // future only, recomputed on every page load
+      sd.max = (new Date().getFullYear() + 3) + '-08-31';
+      sdField.appendChild(sdLab);
+      sdField.appendChild(sd);
+
+      var sdHint = document.createElement('div');
+      sdHint.className = 'on-sd-hint';
+      sdHint.textContent = native
+        ? 'The 2026/27 school year starts Monday 14 September 2026. Applying for a later year is fine \u2014 pick the date you would like your child to start.'
+        : 'Please use YYYY-MM-DD. The 2026/27 school year starts Monday 14 September 2026.';
+      sdField.appendChild(sdHint);
+
+      // one-tap for the overwhelmingly common answer, while the picker stays open for everyone else
+      var FIRST_DAY = '2026-09-14';
+      if (new Date(FIRST_DAY + 'T12:00:00') > tmr) {
+        var qWrap = document.createElement('div');
+        qWrap.className = 'on-sd-q';
+        var qb = document.createElement('button');
+        qb.type = 'button';                      // never submits the form
+        qb.className = 'on-sd-qb';
+        qb.textContent = 'First day of school \u00b7 14 Sept 2026';
+        qb.addEventListener('click', function () {
+          sd.value = FIRST_DAY;
+          clearErr(sd);
+        });
+        qWrap.appendChild(qb);
+        sdField.appendChild(qWrap);
+      }
+
+      var pdWrap = pdHost.closest('.on-ff, .on-ff-full, .on11-full') || pdHost.parentNode;
+      pdWrap.parentNode.insertBefore(sdField, pdWrap);   // reads Class / Mornings / Start / Days
+    }
 
     // ---- application: Preferred Days becomes five day checkboxes (Roberta, 2026-08-20) ----
     // The sheet stores days as five booleans (School Year Registrations G-K). A free-text box meant
@@ -1074,6 +1210,21 @@
           if (el.type === 'tel' && v) {
             var digits = v.replace(/\D/g, '');
             if (digits.length < 10 || digits.length > 15) { err(el, 'Please enter a valid phone number'); bad.push(el); ok = false; }
+          }
+          // Preferred start date (v1.21.0). The form carries novalidate and posts through this
+          // handler, so the input's own min= is never enforced by the browser — this is the only
+          // thing standing between Heather and a start date in the past. Matched by NAME, not by
+          // type, because the field falls back to type="text" where type="date" is unsupported.
+          if (el.name === 'Requested Start' && v) {
+            var sdVal = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(v + 'T12:00:00') : new Date(NaN);
+            var sdNow = new Date();
+            if (isNaN(sdVal.getTime())) {
+              err(el, 'Please enter the date as YYYY-MM-DD');
+              bad.push(el); ok = false;
+            } else if (sdVal <= new Date(sdNow.getFullYear(), sdNow.getMonth(), sdNow.getDate(), 23, 59, 59)) {
+              err(el, 'Please choose a start date in the future');
+              bad.push(el); ok = false;
+            }
           }
         });
         if (f.getAttribute('data-dp') && typeof f.__dpCheck === 'function') {
