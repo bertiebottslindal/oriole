@@ -1,6 +1,24 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.20.0 (2026-08-25, Roberta) — UNDER-18-MONTH ENQUIRIES SPLIT OUT OF THE SCHOOL-YEAR FUNNEL.
+   Two of the first four paid leads picked Child Age "Under 18 months (for interest)". Those are
+   real families but for a future school year, and every one of them was firing the standard Lead
+   event that the live Midtown ad set optimises on, so delivery was being pointed at parents who
+   cannot fill a 26/27 seat. They now fire a custom EarlyInterestLead instead, the same shape as
+   the CampLead split, so nothing is lost for audience building or a later early-enrolment
+   campaign but school-year delivery is not trained on them.
+   The thank-you page for that band no longer says "Heather will arrange a tour" (she cannot, yet).
+   It points at the Toddler Class, where every child starts at 18 months, and at an early
+   application. Early enrolment is a real revenue line already: three of the six applications on
+   file are early ones for 2027-09 or 2028, each with the $150 fee paid.
+   ⚠️ The age flag is written BEFORE form=lead in the thank-you URL and that ORDER IS LOAD-BEARING.
+   The School Lead custom conversion matches the literal string "thank-you?form=lead" and Meta will
+   not let its rules be edited, so leading with age=early is the only way to keep that conversion
+   off these leads. Reordering the params silently re-arms it.
+   Server side must match or nothing changes: Make scenario 5663472 fires its own CAPI Lead, and
+   with dedup an unsuppressed server event still counts. See the 2026-08-25 CHANGELOG.
+
    v1.19.0 (2026-08-24, Roberta) — ONE-PARENT FAMILIES COULD NOT SUBMIT AN APPLICATION.
    Every second-parent field was required in the Webflow markup, and v1.8.0 coerced the email and
    phone ones to real type=email/tel, so the form's own hint ("enter N/A") was impossible to obey:
@@ -721,14 +739,25 @@
     }
 
     // ---- per-form confirmation routing (Heather batch 3): where to send people after a successful submit ----
-    function afterSubmit(fname) {
+    function afterSubmit(fname, fEl) {
       var q = null;
       if (/Lead Form$/.test(fname)) {
         var topic = {
           'Home Lead Form': 'general', 'Toddler Lead Form': 'toddler', 'Junior Lead Form': 'junior',
           'Senior Lead Form': 'senior', 'Summer Camp Lead Form': 'camp'
         }[fname] || 'general';
-        q = 'form=lead&topic=' + topic + (ON_LAST_EVID ? '&eid=' + encodeURIComponent(ON_LAST_EVID) : '');
+        // v1.20.0: an under-18-month enquiry is a real lead in the WRONG YEAR. It is the early
+        // enrolment funnel, not the 26/27 one, so it must not train school-year delivery — the
+        // same reasoning that already sends camp to CampLead.
+        // The age flag is written BEFORE form=lead on purpose. The School Lead custom conversion
+        // matches on the literal string "thank-you?form=lead" and its rules cannot be edited
+        // (Meta locks custom-conversion rules after creation), so leading with age=early is the
+        // only way to keep that browser-side conversion off these leads too.
+        // ⚠️ PARAM ORDER IS LOAD-BEARING. Putting form=lead first re-arms School Lead silently.
+        var ageEl = (fEl || document).querySelector('[name="Child Age"]');
+        var early = /Under 18 months/i.test(ageEl ? (ageEl.value || '') : '');
+        q = (early ? 'age=early&' : '') + 'form=lead&topic=' + topic +
+          (ON_LAST_EVID ? '&eid=' + encodeURIComponent(ON_LAST_EVID) : '');
       } else if (fname === 'Application 2026-2027') {
         var _cf = document.querySelector('[name="Child First Name"]');
         var _cl = document.querySelector('[name="Child Last Name"]');
@@ -1100,7 +1129,7 @@
             // v1.17.0: a spam-gated submission must never reach /thank-you. That URL fires the
             // School Lead custom conversion AND the standard Lead pixel event, so a discarded bot
             // submission was training delivery on bots. Silent finishes stay on the page.
-            if (!silent && afterSubmit(fname)) return;
+            if (!silent && afterSubmit(fname, f)) return;
             f.style.display = 'none';
             var d = w.querySelector('.w-form-done');
             if (d) d.style.display = 'block';
@@ -1534,11 +1563,17 @@
       try {
         var _eid = tqp.get('eid');
         var _topic = tqp.get('topic') || 'general';
+        var _early = (tqp.get('age') || '') === 'early';
         if (_eid && (tqp.get('form') || '') === 'lead' && window.fbq) {
           // Camp enquiries are a DIFFERENT funnel and must not feed the school-year optimisation
           // event, exactly as the School Lead custom conversion already excludes topic=camp.
           if (_topic === 'camp') {
             window.fbq('trackCustom', 'CampLead', { content_name: 'camp' }, { eventID: _eid });
+          } else if (_early) {
+            // v1.20.0: under 18 months. A real lead, but for a future school year, so it never
+            // feeds the 26/27 Lead optimisation. Kept as its own named event rather than dropped
+            // so it stays available for audience building and a future early-enrolment campaign.
+            window.fbq('trackCustom', 'EarlyInterestLead', { content_name: _topic }, { eventID: _eid });
           } else {
             window.fbq('track', 'Lead', { content_name: _topic }, { eventID: _eid });
           }
@@ -1627,7 +1662,23 @@
         }
       };
       var tForm = tqp.get('form') || '';
-      if (tForm === 'lead') {
+      if (tForm === 'lead' && _early && _topic !== 'camp') {
+        // v1.20.0: under-18-month enquiry. Not a rejection and not a holding message. The two
+        // real next steps are the Toddler Class (where every child starts, from 18 months) and
+        // an early application, which is how Baby Kallir, Hudson Jarvis and Orli Brill are
+        // already in the book for 2027 and 2028.
+        if (tHead) tHead.textContent = 'Thanks! Your message is on its way.';
+        if (tSub) tSub.textContent = 'Heather, our Head of School, will be in touch. Your child is a little young for a place right now, so here is what usually happens next.';
+        if (tCard) tCard.textContent = 'Where your child starts';
+        setList([
+          'Every child begins in the Toddler Class, which takes children from 18 months. The page has the schedules, the educator ratio of 1:5 and the tuition.',
+          'Many families apply a year or more ahead. A $150 application fee puts you on the priority list for a future year.',
+          'There is nothing to pay unless you apply, and Heather will stay in touch either way.'
+        ]);
+        if (tNote) tNote.innerHTML = FEE_LINE;
+        setBtn('/toddler', 'See the Toddler Class');
+        setBtn2('/how-to-enrol', 'Start an early application');
+      } else if (tForm === 'lead') {
         var tp = TLDR[tqp.get('topic')];
         if (tHead) tHead.textContent = 'Thanks — your message is on its way!';
         if (tSub) tSub.textContent = 'Heather, our Head of School, will be in touch to arrange a tour.';
