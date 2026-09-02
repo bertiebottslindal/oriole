@@ -1,6 +1,17 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.26.0 (2026-09-02, Roberta) — THE SAME DEFECT ON FIVE MORE APPLICATION FIELDS.
+   Auditing every form after v1.25.0 showed the "*" is decorative on the core identity fields as
+   well: Child First Name, Child Last Name, Date of Birth, Parent Name and Home Address carried
+   no required attribute, so an application could be submitted with no child name and no date of
+   birth. Now enforced. Deliberately left alone: the four Second Parent fields, which are
+   conditional by design since v1.8.0 (requiring them outright would block every single-parent
+   application), and Board Interest, which is starred but low-stakes — Heather's call.
+   Audit also confirmed the error experience itself is sound: inline messages in #B8452A under
+   each field, focus jumps to the first bad field, and a summary banner appears. The one weakness
+   is that the first error is often off-screen on the long forms — the page does not scroll to it.
+
    v1.25.0 (2026-09-02, Roberta) — "HOW DID YOU HEAR ABOUT ORIOLE?" WAS NEVER ACTUALLY REQUIRED.
    The label carried a "*" and it was reported as mandatory, but the <select> had no required
    attribute. These forms are novalidate and the submit validator only checks el.required, so an
@@ -1235,6 +1246,26 @@
       }
       sel.addEventListener('change', syncOther);
       syncOther();
+    })();
+
+    // ---- the same defect, five more fields (v1.26.0) ----
+    // Auditing the application form after the How-Did-You-Hear fix found that the "*" is
+    // decorative on the core identity fields too: an application could be submitted with no
+    // child name, no date of birth, no parent name and no address. The labels already tell the
+    // parent these are required, so this only makes the form behave the way it reads.
+    // Deliberately NOT touched:
+    //   · Second Parent Name/Relationship/Email/Phone — conditional by design since v1.8.0
+    //     (required only once that section is started), so a blanket required would block
+    //     every single-parent application.
+    //   · Board Interest — starred but low-stakes; left for Heather to decide.
+    (function () {
+      var appForm2 = document.querySelector('form[data-name="Application 2026-2027"]');
+      if (!appForm2) { return; }
+      ['Child First Name', 'Child Last Name', 'Date of Birth', 'Parent Name', 'Home Address']
+        .forEach(function (n) {
+          var el = appForm2.querySelector('[name="' + n + '"]');
+          if (el) { el.required = true; }
+        });
     })();
 
     // ---- required CWELCC + fee-schedule acknowledgement on the application form (Roberta, 2026-08-20) ----
