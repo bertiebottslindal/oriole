@@ -1,6 +1,18 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.25.0 (2026-09-02, Roberta) — "HOW DID YOU HEAR ABOUT ORIOLE?" WAS NEVER ACTUALLY REQUIRED.
+   The label carried a "*" and it was reported as mandatory, but the <select> had no required
+   attribute. These forms are novalidate and the submit validator only checks el.required, so an
+   application could sail through on the blank "Select one…" default — and one did on 2026-09-02
+   (a real applicant; no source captured, which is exactly the question Heather added the field to
+   answer). The select is now required in JS, matching how the CWELCC boxes are handled.
+   The "Other" branch was half-built as well: .on7-hdyho is display:none until .on7-hdyho-on is
+   added and nothing ever added it, so choosing "Other" gave the parent nowhere to type. It now
+   reveals on change. ⚠️ Its input is required only WHILE VISIBLE — the validator walks every
+   field regardless of visibility, so a hidden required input would block submission with an
+   error message nobody can see.
+
    v1.24.0 (2026-09-02, Roberta) — THE TAB STILL SHOWED WEBFLOW'S GREY "W".
    A favicon injector has been in this file for a while, but it only APPENDED rel="icon" and
    never removed the rel="shortcut icon" that Webflow emits for its own default
@@ -1195,6 +1207,35 @@
       wrap.appendChild(lab);
       insertAboveSubmit(f, wrap);
     });
+
+    // ---- "How did you hear about Oriole?" — actually enforce it (v1.25.0) ----
+    // The label has always carried a "*" and the field was reported as mandatory, but the
+    // <select> never carried a required attribute. These forms are novalidate and the submit
+    // handler above only checks el.required, so nothing stopped an application going through on
+    // the blank "Select one…" default — and one did (2026-09-02, a real applicant, no source
+    // captured). This is the one field Heather asked for to see where families come from.
+    // The "Other" text box was half-built too: .on7-hdyho is display:none until .on7-hdyho-on is
+    // added, and nothing ever added it, so choosing "Other" gave you nowhere to type.
+    // ⚠️ The Other input is only required WHILE VISIBLE — the validator walks every field
+    // regardless of visibility, so leaving it required when hidden would block submission with
+    // an error nobody can see.
+    (function () {
+      var sel = document.querySelector('select[name="How Did You Hear"]');
+      if (!sel) { return; }
+      sel.required = true;
+      var otherWrap = document.querySelector('.on7-hdyho');
+      var otherIn = document.querySelector('input[name="How Did You Hear Other"]');
+      function syncOther() {
+        var isOther = sel.value === 'Other';
+        if (otherWrap) { otherWrap.classList.toggle('on7-hdyho-on', isOther); }
+        if (otherIn) {
+          otherIn.required = isOther;
+          if (!isOther) { otherIn.value = ''; }
+        }
+      }
+      sel.addEventListener('change', syncOther);
+      syncOther();
+    })();
 
     // ---- required CWELCC + fee-schedule acknowledgement on the application form (Roberta, 2026-08-20) ----
     // Same gate as the lead forms, but it also confirms the parent has seen the fees: an application
