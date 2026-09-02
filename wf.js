@@ -1,6 +1,16 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.24.0 (2026-09-02, Roberta) — FAVICON. Site Settings > General > Favicon has never been
+   filled in, so every Oriole tab shows Webflow's generic "W". Site Settings is the right home
+   for this, but the info@ Webflow login is returning 403 from /api/user/login, so it is set
+   from here for now. ⚠️ IT DEFERS ON ITS OWN — it only acts while the icon still points at
+   Webflow's shared default (cdn.../img/favicon.ico, note the /img/ path; a real uploaded
+   favicon is served from /<siteId>/<assetId>_...). Upload one in Site Settings and this code
+   stops touching it, with no edit needed here. Artwork is a child's head lifted straight from
+   the school's own logo, on a white disc with a green ring so it reads on light AND dark tab
+   strips; served from this same GitHub Pages repo as favicon-32.png / webclip-256.png.
+
    v1.23.0 (2026-09-02, Roberta) — E-TRANSFERS NOW GO TO payments@, NOT info@.
    Heather reports two families sent the $150 application fee to info@oriolenurseryschool.com.
    That address is not the one registered with the school's bank, so Interac falls back to
@@ -203,6 +213,37 @@
    1.4.1 removed "within one business day" sitewide + morning hours on confirmations. */
 (function () {
   var T0 = Date.now();
+
+  // ---- favicon (v1.24.0) ----------------------------------------------------
+  // Site Settings > General > Favicon has never been filled in, so every Oriole tab shows
+  // Webflow's generic "W". This sets ours instead — but it DEFERS ON ITS OWN: it only acts
+  // while the icon still points at Webflow's SHARED default (cdn.../img/favicon.ico — note
+  // the /img/ path; a real uploaded favicon is served from /<siteId>/<assetId>_...). Upload
+  // one in Site Settings and this stops touching it, with no edit needed here.
+  (function () {
+    var BASE = 'https://bertiebottslindal.github.io/oriole/';
+    var IS_WF_DEFAULT = /\/img\/(favicon\.ico|webclip\.png)(\?|$)/i;
+    function set(rel, href, sizes, type) {
+      var h = document.head || document.getElementsByTagName('head')[0];
+      if (!h) { return; }
+      var existing = h.querySelectorAll('link[rel="' + rel + '"]');
+      for (var i = 0; i < existing.length; i++) {
+        // a real, site-uploaded icon wins — leave it completely alone
+        if (!IS_WF_DEFAULT.test(existing[i].getAttribute('href') || '')) { return; }
+      }
+      for (var j = existing.length - 1; j >= 0; j--) {
+        existing[j].parentNode.removeChild(existing[j]);
+      }
+      var l = document.createElement('link');
+      l.setAttribute('rel', rel);
+      l.setAttribute('href', href);
+      if (sizes) { l.setAttribute('sizes', sizes); }
+      if (type) { l.setAttribute('type', type); }
+      h.appendChild(l);
+    }
+    set('shortcut icon', BASE + 'favicon-32.png', null, 'image/png');
+    set('apple-touch-icon', BASE + 'webclip-256.png', '256x256', null);
+  })();
 
   // ---- Meta pixel (v1.11.0, guarded v1.14.0) · dataset 1372762647822184 "Oriole Website" ----
   // See the header note before adding this anywhere else on the site.
