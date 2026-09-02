@@ -1,15 +1,19 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
-   v1.24.0 (2026-09-02, Roberta) — FAVICON. Site Settings > General > Favicon has never been
-   filled in, so every Oriole tab shows Webflow's generic "W". Site Settings is the right home
-   for this, but the info@ Webflow login is returning 403 from /api/user/login, so it is set
-   from here for now. ⚠️ IT DEFERS ON ITS OWN — it only acts while the icon still points at
-   Webflow's shared default (cdn.../img/favicon.ico, note the /img/ path; a real uploaded
-   favicon is served from /<siteId>/<assetId>_...). Upload one in Site Settings and this code
-   stops touching it, with no edit needed here. Artwork is a child's head lifted straight from
-   the school's own logo, on a white disc with a green ring so it reads on light AND dark tab
-   strips; served from this same GitHub Pages repo as favicon-32.png / webclip-256.png.
+   v1.24.0 (2026-09-02, Roberta) — THE TAB STILL SHOWED WEBFLOW'S GREY "W".
+   A favicon injector has been in this file for a while, but it only APPENDED rel="icon" and
+   never removed the rel="shortcut icon" that Webflow emits for its own default
+   (cdn.prod.website-files.com/img/favicon.ico — note the shared /img/ path, not /<siteId>/).
+   Both links sat in the head and Chrome kept painting the "W". The block now strips the
+   default icon links before adding ours.
+   The artwork was also the problem underneath: the old oriole-favicon-32.png was the entire
+   logo — wordmark, seven children and "nursery school" — squeezed into 32px, which renders as
+   an illegible green smudge. It is now a single child's head lifted from that same logo, on a
+   white disc with a green ring so it holds up on light AND dark tab strips. New assets live in
+   the school's own Webflow asset library (oriole-favicon-face-32 / oriole-webclip-face-256).
+   ⚠️ Site Settings > General > Favicon is UI-only — not reachable from any API — so this stays
+   in JS until someone sets it in the Designer, at which point delete this block.
 
    v1.23.0 (2026-09-02, Roberta) — E-TRANSFERS NOW GO TO payments@, NOT info@.
    Heather reports two families sent the $150 application fee to info@oriolenurseryschool.com.
@@ -214,36 +218,6 @@
 (function () {
   var T0 = Date.now();
 
-  // ---- favicon (v1.24.0) ----------------------------------------------------
-  // Site Settings > General > Favicon has never been filled in, so every Oriole tab shows
-  // Webflow's generic "W". This sets ours instead — but it DEFERS ON ITS OWN: it only acts
-  // while the icon still points at Webflow's SHARED default (cdn.../img/favicon.ico — note
-  // the /img/ path; a real uploaded favicon is served from /<siteId>/<assetId>_...). Upload
-  // one in Site Settings and this stops touching it, with no edit needed here.
-  (function () {
-    var BASE = 'https://bertiebottslindal.github.io/oriole/';
-    var IS_WF_DEFAULT = /\/img\/(favicon\.ico|webclip\.png)(\?|$)/i;
-    function set(rel, href, sizes, type) {
-      var h = document.head || document.getElementsByTagName('head')[0];
-      if (!h) { return; }
-      var existing = h.querySelectorAll('link[rel="' + rel + '"]');
-      for (var i = 0; i < existing.length; i++) {
-        // a real, site-uploaded icon wins — leave it completely alone
-        if (!IS_WF_DEFAULT.test(existing[i].getAttribute('href') || '')) { return; }
-      }
-      for (var j = existing.length - 1; j >= 0; j--) {
-        existing[j].parentNode.removeChild(existing[j]);
-      }
-      var l = document.createElement('link');
-      l.setAttribute('rel', rel);
-      l.setAttribute('href', href);
-      if (sizes) { l.setAttribute('sizes', sizes); }
-      if (type) { l.setAttribute('type', type); }
-      h.appendChild(l);
-    }
-    set('shortcut icon', BASE + 'favicon-32.png', null, 'image/png');
-    set('apple-touch-icon', BASE + 'webclip-256.png', '256x256', null);
-  })();
 
   // ---- Meta pixel (v1.11.0, guarded v1.14.0) · dataset 1372762647822184 "Oriole Website" ----
   // See the header note before adding this anywhere else on the site.
@@ -501,15 +475,25 @@
   })();
 
   // ---- favicon + webclip (site settings favicon is UI-only) ----
+  // v1.24.0: this used to APPEND rel="icon" without removing Webflow's own default
+  // rel="shortcut icon" (cdn.../img/favicon.ico), so the page carried both and Chrome kept
+  // painting Webflow's grey "W" in the tab. It now removes the defaults first.
+  // Artwork also changed: the old file was the full logo squeezed into 32px, which renders
+  // as an unreadable green smudge. It is now a child's head taken straight from the same
+  // logo, on a white disc with a green ring so it reads on light AND dark tab strips.
+  var ON_FAVICON_32  = 'https://cdn.prod.website-files.com/6a513665fb1af89aad18d8ac/6a987cc2f42cbc65d6c30fac_oriole-favicon-face-32.png';
+  var ON_FAVICON_256 = 'https://cdn.prod.website-files.com/6a513665fb1af89aad18d8ac/6a987cc272ea5605c98eaf66_oriole-webclip-face-256.png';
   (function () {
+    var h = document.head || document.getElementsByTagName('head')[0];
+    if (!h) { return; }
+    var old = h.querySelectorAll('link[rel="shortcut icon"],link[rel="icon"],link[rel="apple-touch-icon"]');
+    for (var i = old.length - 1; i >= 0; i--) { old[i].parentNode.removeChild(old[i]); }
     var f = document.createElement('link');
-    f.rel = 'icon'; f.type = 'image/png';
-    f.href = 'https://cdn.prod.website-files.com/6a513665fb1af89aad18d8ac/6a517db696182a92af97688f_oriole-favicon-32.png';
-    document.head.appendChild(f);
+    f.rel = 'icon'; f.type = 'image/png'; f.href = ON_FAVICON_32;
+    h.appendChild(f);
     var a = document.createElement('link');
-    a.rel = 'apple-touch-icon';
-    a.href = 'https://cdn.prod.website-files.com/6a513665fb1af89aad18d8ac/6a517db596182a92af97683d_oriole-favicon-256.png';
-    document.head.appendChild(a);
+    a.rel = 'apple-touch-icon'; a.href = ON_FAVICON_256;
+    h.appendChild(a);
   })();
 
   // ---- keep the hidden registration package + thank-you pages out of search indexes ----
