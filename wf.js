@@ -1,6 +1,15 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.23.0 (2026-09-02, Roberta) — E-TRANSFERS NOW GO TO payments@, NOT info@.
+   Heather reports two families sent the $150 application fee to info@oriolenurseryschool.com.
+   That address is not the one registered with the school's bank, so Interac falls back to
+   security questions instead of auto-depositing — the money arrives, but someone has to chase
+   the answer. ETRANSFER_TO is the single constant behind both places the address is shown
+   (the payment band's "prefer an e-transfer?" line and the card-failure fallback), so this is
+   a one-line change. ⚠️ payments@ must be the address registered for Interac auto-deposit at
+   the bank before this ships, or the same security-question problem just moves inbox.
+
    v1.22.0 (2026-09-02, Roberta) — THE $150 CARD PAYMENT WAS FAILING ON THE FIRST CLICK.
    loadStripeJs assigned `sc.onload = cb` directly, so the browser handed cb the load Event as
    its first argument. cb's signature is function (err) {...} and it bails on a truthy err, so
@@ -1759,7 +1768,7 @@
       // createEmbeddedCheckoutPage() loaded from js.stripe.com/dahlia/stripe.js (NOT /v3/).
       var APP_FEE_HOOK = 'https://hook.us2.make.com/i3h3pvb7c15mlgq89p7pcyqdhtlbjzl1';
       var STRIPE_PK    = 'pk_live_51Tt6ieEQpj2yI86HWOJVnLfUp08VZuHPTCTjLmSr9zLDC0taAa3IJWuCAPuh47xaaGgiFe7Of4MJqcpQLKk92rsM00vCOWQzYz';
-      var ETRANSFER_TO = 'info@oriolenurseryschool.com';
+      var ETRANSFER_TO = 'payments@oriolenurseryschool.com';
       function loadStripeJs(cb) {
         if (window.Stripe) { cb(); return; }
         var sc = document.createElement('script');
