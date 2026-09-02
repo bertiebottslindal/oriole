@@ -1,6 +1,15 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.22.0 (2026-09-02, Roberta) — THE $150 CARD PAYMENT WAS FAILING ON THE FIRST CLICK.
+   loadStripeJs assigned `sc.onload = cb` directly, so the browser handed cb the load Event as
+   its first argument. cb's signature is function (err) {...} and it bails on a truthy err, so
+   the very first click always ran fail() and showed the e-transfer fallback — stripe.js had
+   loaded fine and createEmbeddedCheckoutPage was never even reached. A second click worked
+   because window.Stripe was cached and loadStripeJs then called cb() with no arguments, which
+   is why this read as flaky rather than broken. Verified live 2026-09-02: first click failed,
+   second mounted the checkout. Also reworded the deposit line on the application confirmation.
+
    v1.21.0 (2026-08-28, Roberta) — PREFERRED START DATE ON THE APPLICATION + ANNOUNCEMENT BAR.
    1. The application form never asked when a family wants to start, yet the Applications tab has
    had a "Requested start" column since the Airtable build and the Seat Map is month-by-month —
@@ -1755,7 +1764,12 @@
         if (window.Stripe) { cb(); return; }
         var sc = document.createElement('script');
         sc.src = 'https://js.stripe.com/dahlia/stripe.js';
-        sc.onload = cb;
+        // v1.22.0: sc.onload passes the load EVENT as the first argument, and the callback's
+        // first parameter is treated as an error — so `if (err || !window.Stripe)` was always
+        // true on the FIRST click and every applicant was pushed to the e-transfer fallback.
+        // A second click worked because window.Stripe was cached by then, which is why this
+        // looked intermittent rather than broken. Call cb with no arguments.
+        sc.onload = function () { cb(); };
         sc.onerror = function () { cb(new Error('stripe.js failed')); };
         document.head.appendChild(sc);
       }
@@ -1869,7 +1883,7 @@
           : (canCard || canEmt
               ? 'A $150 non-refundable application fee is due, payable above'
               : 'A $150 non-refundable application fee is due at submission — the Registrar will confirm payment details'));
-        tItems.push('After acceptance: an $850 deposit is due four weeks after your acceptance letter');
+        tItems.push('After acceptance: an $850 deposit toward your tuition is due four weeks after your acceptance letter to hold your place.');
         setList(tItems);
         if (tNote) tNote.innerHTML = FEE_LINE;
         setBtn('/fee-schedule', 'See the Fee Schedule');
