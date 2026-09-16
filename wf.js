@@ -1,6 +1,10 @@
 /* Oriole Webflow site JS — served via GitHub Pages (bertiebottslindal.github.io/oriole/wf.js).
    Loaded via a plain <script> tag in Webflow Site settings > Custom code > Footer (no SRI since
    2026-08-19 — updates ship on git push alone). Do not delete — load-bearing for the Webflow site.
+   v1.27.0 (2026-09-15, Roberta) — /half-day + /full-day ad landing pages. Two new lead forms
+   ("Half Day Lead Form", "Full Day Lead Form") get their Child Age option lists, their own
+   thank-you topics (halfday / fullday: "a board member will confirm one of your three mornings"),
+   and they post an extra "Tour Preferences" field filled by the page's own tour picker.
    v1.26.0 (2026-09-02, Roberta) — THE SAME DEFECT ON FIVE MORE APPLICATION FIELDS.
    Auditing every form after v1.25.0 showed the "*" is decorative on the core identity fields as
    well: Child First Name, Child Last Name, Date of Birth, Parent Name and Home Address carried
@@ -646,6 +650,10 @@
       // cannot be answered by silence (v1.8.0 - previously option 1 was pre-selected and posted)
       'Child Age': ['Select an age', 'Under 18 months (for interest)', '18 months \u2013 2.5 years', '2.6 \u2013 3 years', '3 \u2013 5 years'],
       'Child Age|Summer Camp Lead Form': ['Select an age', '2 years', '3 years', '4 years', '5 years'],
+      // v1.27.0: the two ad landing pages (/half-day, /full-day). Values reuse the existing age
+      // strings so the workbook's Child Age column stays consistent; labels name the class.
+      'Child Age|Half Day Lead Form': ['Select an age', '18 months \u2013 2.5 years (Toddler waitlist)', '2.6 \u2013 3 years', '3 \u2013 5 years'],
+      'Child Age|Full Day Lead Form': ['Select an age', '2.6 \u2013 3 years', '3 \u2013 5 years'],
       'Gender': ['Select an option', 'Prefer not to say', 'Girl', 'Boy', 'Other'],
       'Class': ['Select a class', 'Toddler \u00b7 18 months \u2013 2.5 years', 'Junior Preschool \u00b7 2.6 \u2013 3 years', 'Senior Preschool \u00b7 3 \u2013 5 years'],
       'Schedule': ['Select a schedule', '2 mornings (Tue & Thu)', '3 mornings', '4 mornings', '5 mornings', 'Extended day \u2014 5 full days, 9:00\u20132:45 (new, ages 2.5+)'],
@@ -946,7 +954,8 @@
       if (/Lead Form$/.test(fname)) {
         var topic = {
           'Home Lead Form': 'general', 'Toddler Lead Form': 'toddler', 'Junior Lead Form': 'junior',
-          'Senior Lead Form': 'senior', 'Summer Camp Lead Form': 'camp'
+          'Senior Lead Form': 'senior', 'Summer Camp Lead Form': 'camp',
+          'Half Day Lead Form': 'halfday', 'Full Day Lead Form': 'fullday'
         }[fname] || 'general';
         // v1.20.0: an under-18-month enquiry is a real lead in the WRONG YEAR. It is the early
         // enrolment funnel, not the 26/27 one, so it must not train school-year delivery — the
@@ -1923,6 +1932,20 @@
             'Schedules: 2, 3, 4 or 5 mornings (9 am–12 pm) · new Extended Day, 5 days 9:00–2:45',
             'Tuition: $502–$795 / month participating · $727–$1,016 non-participating · Extended Day $1,380 / $1,601'],
           btn: ['/senior', 'More about Senior Preschool']
+        },
+        halfday: {
+          card: 'What happens next',
+          items: ['A member of our parent board will email you to confirm one of the three mornings you picked.',
+            'Tours run at 9:00 (drop-off) or 11:30 (just before pickup), so you see the room as it really is.',
+            'Junior and Senior mornings run 9:00\u201312:00, two to five mornings a week.'],
+          btn: ['/half-day', 'Back to the half-day page']
+        },
+        fullday: {
+          card: 'What happens next',
+          items: ['A member of our parent board will email you to confirm one of the three mornings you picked.',
+            'Tours run at 9:00 (drop-off) or 11:30 (just before pickup), and include the afternoon room.',
+            'The full day runs 9:00\u20132:45, Monday to Friday, for ages 2.5 to 5.'],
+          btn: ['/full-day', 'Back to the full-day page']
         },
         camp: {
           card: 'Summer Camp 2026 at a glance',
