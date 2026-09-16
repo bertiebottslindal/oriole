@@ -1,5 +1,8 @@
 # Oriole Nursery School — Website Preview (mockup)
 
+
+> **2026-09-16:** the mockup pages and the password gate were deleted (commit 411c834) once the site went live on Webflow. This repo now exists only to host **`wf.js`** (the live site's custom-code layer, loaded on every oriolenurseryschool.com page) and **`virtual-tour.mp4`**. Do not delete or rename either. The page table below is history.
+
 A static, cross-linked microsite of redesigned Oriole pages, for sharing a draft
 with Heather. Real Oriole photos and copy drawn from the live site, program
 plans, fee schedule, and handbook. **Design mockup — final copy/photos to be confirmed.**
